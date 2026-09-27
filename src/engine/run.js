@@ -365,12 +365,10 @@ export function combineBranches (results) {
  *   {vid, sessionIdx, insights, meta} descriptors (the engine wraps them);
  *   games whose insights version is unsupported are skipped and reported in
  *   warnings
- * @param {boolean} [args.rejectTeamNumbers] analyze()'s option: reject a
- *   team compared with a number even in a query that reads one game
  * @returns {{shots: Array, columns?: Array, rows?: Array,
  *   warnings: Array} | {errors: Array}} results, or lex/parse/analyze errors
  */
-export function runQuery ({ text, games, rejectTeamNumbers }) {
+export function runQuery ({ text, games }) {
   const parsed = parse(text)
   if (parsed.errors) {
     return { errors: parsed.errors }
@@ -378,7 +376,7 @@ export function runQuery ({ text, games, rejectTeamNumbers }) {
   const branches = parsed.ast.kind === 'union'
     ? parsed.ast.branches
     : [{ query: parsed.ast, all: true }]
-  const errors = analyze(parsed.ast, { rejectTeamNumbers }).errors
+  const errors = analyze(parsed.ast).errors
   if (errors.length > 0) {
     return { errors }
   }

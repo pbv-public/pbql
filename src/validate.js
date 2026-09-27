@@ -5,14 +5,13 @@ import { parse } from './lang/parse.js'
 
 /**
  * @param {string} text a PBQL query
- * @param {object} [options] analyze()'s options (rejectTeamNumbers)
  * @returns {{errors: Array, ast?: object}} errors is empty when the query
  *   is valid; ast is present whenever parsing succeeded
  */
-export function validate (text, options) {
+export function validate (text) {
   const parsed = parse(text)
   if (parsed.errors) {
     return { errors: parsed.errors }
   }
-  return { errors: analyze(parsed.ast, options).errors, ast: parsed.ast }
+  return { errors: analyze(parsed.ast).errors, ast: parsed.ast }
 }
