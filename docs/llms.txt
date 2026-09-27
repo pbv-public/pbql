@@ -49,6 +49,13 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
   real fault, so count forced faults as shot.errors.unforced = false.
   Subtracting the unforced count from the fault count counts every
   unknown as forced (on one sample game that turns 9 into 19).
+- avg() of a three-valued property averages only the rows where it is
+  known, so its denominator is not every shot. avg(shot.errors.unforced)
+  is the share of ASSESSED faults that were unforced (on one game, 7 of
+  19, 37%), never a rate per shot. For "how often do I make an unforced
+  error", divide by the shots: sum(shot.errors.unforced) / count() (7
+  of 285 shots, 2.5%). Whenever you state a rate, say what it is out of
+  (per shot, per fault, per rally).
 - UNION joins whole queries: each branch keeps its own SELECT, FROM,
   WHERE and LIMIT, every branch must select the same number of columns
   (names come from the first), and UNION ALL keeps duplicate rows where
@@ -220,7 +227,7 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
 - shot.hitTime (number [seconds]): when in the video the ball was struck
 - shot.endTime (number [seconds]): when in the video the shot's flight ended
 - shot.hasError (boolean): whether any error was detected on this shot
-- shot.errors.unforced (boolean): whether the fault on this shot was an unforced error, i.e. the hitter MISSED without being put under pressure; only assessed on actual faults with a confidently-known rally winner, so it is often unknown even on a real fault. Count forced faults as errors.unforced = false; do NOT subtract the unforced count from the fault count, which counts every unknown as forced. Not related to winnerType "forced_fault", which is set on a shot that WON
+- shot.errors.unforced (boolean): whether the fault on this shot was an unforced error, i.e. the hitter MISSED without being put under pressure; only assessed on actual faults with a confidently-known rally winner, so it is often unknown even on a real fault. Count forced faults as errors.unforced = false; do NOT subtract the unforced count from the fault count, which counts every unknown as forced. avg() of it is a share of assessed faults, not of shots: a per-shot rate is sum(shot.errors.unforced) / count(). Not related to winnerType "forced_fault", which is set on a shot that WON
 - shot.errors.popup (string ["exploited"|"potential"]): whether a dink or drop popped the ball up ("exploited" = the opponents attacked it out of the air, "potential" = they did not)
 - shot.hasFault (boolean): whether this shot committed a rule fault, actual or potential — e.g. a ball headed out that an opponent played anyway
 - shot.errors.faults.net (boolean): whether the net stopped the ball

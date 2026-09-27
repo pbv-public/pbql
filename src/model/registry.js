@@ -402,8 +402,10 @@ const SHOT_PROPS = [
       'actual faults with a confidently-known rally winner, so it is ' +
       'often unknown even on a real fault. Count forced faults as ' +
       'errors.unforced = false; do NOT subtract the unforced count from ' +
-      'the fault count, which counts every unknown as forced. Not related ' +
-      'to winnerType "forced_fault", which is set on a shot that WON',
+      'the fault count, which counts every unknown as forced. avg() of it ' +
+      'is a share of assessed faults, not of shots: a per-shot rate is ' +
+      'sum(shot.errors.unforced) / count(). Not related to winnerType ' +
+      '"forced_fault", which is set on a shot that WON',
     extract: ctx => ctx.shot.errors?.unforced
   },
   {
