@@ -527,14 +527,14 @@ describe('runQuery: SELECT', () => {
     const result = runQuery({
       text: 'SELECT avg(shot.hitter.rating.offense) AS "offense", ' +
         'avg(shot.hitter.rating.defense) AS "defense", ' +
-        'avg(shot.hitter.rating.consistency) AS "consistency" ' +
+        'avg(shot.hitter.rating.courtIQ) AS "court IQ" ' +
         'FROM "x" WHERE shot.hitter.id = 0',
       games: [makeDoublesGame()]
     })
-    expect(result.columns).toEqual(['offense', 'defense', 'consistency'])
+    expect(result.columns).toEqual(['offense', 'defense', 'court IQ'])
     // a rating repeats on every shot of the game, so its average IS the
     // rating -- which is what makes this a one-line query
-    expect(result.rows).toEqual([[4, 3, 3.9]])
+    expect(result.rows).toEqual([[4, 3, 3.6]])
   })
 
   test('an unrated area averages to unknown, never to zero', () => {

@@ -292,12 +292,12 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
 - player.forwardPressure (number [0-1]): how actively the player's team pushed shots toward positional advantage over the whole game (team-level: teammates share it); unknown in singles
 - player.finishingAbility (number [0-1]): how efficiently the player's team converted positional advantage into ending rallies over the whole game (team-level: teammates share it); unknown in singles
 - player.rating.overall (number [DUPR]): the player's overall rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
-- player.rating.serve (number [DUPR]): the player's serving rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
-- player.rating.return (number [DUPR]): the player's returning rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
-- player.rating.offense (number [DUPR]): the player's offense rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
-- player.rating.defense (number [DUPR]): the player's defense rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
-- player.rating.agility (number [DUPR]): the player's movement and court coverage rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
-- player.rating.consistency (number [DUPR]): the player's consistency rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
+- player.rating.kitchenGame (number [DUPR]): the player's Kitchen Game (play at the non-volley zone) rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
+- player.rating.ballControl (number [DUPR]): the player's Ball Control (how well they control the ball) rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
+- player.rating.defense (number [DUPR]): the player's Defense (neutralizing attacks) rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
+- player.rating.offense (number [DUPR]): the player's Offense (applying pressure) rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
+- player.rating.courtIQ (number [DUPR]): the player's Court IQ (court awareness and decision-making) rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
+- player.rating.targeting (number [DUPR]): the player's Targeting (how well they place their shots) rating for THIS game (not their career rating); one value per game, so it repeats on every shot of it and is unknown for a player the game did not rate
 - player.taggedWith(pattern) (boolean): whether this player matches this name pattern (case-insensitive, * wildcard; untagged players match their default "Player N" name) or exact email
 
 ## Examples

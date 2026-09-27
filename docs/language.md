@@ -235,9 +235,9 @@ through:
 - position: `pos.x`/`pos.y` in the player's own frame, `pos.absX`/`pos.absY`
   raw
 - derived distances: `feetToKitchen`, `feetToNet`, …
-- ratings for **this game**: `rating.overall`, `rating.serve`,
-  `rating.return`, `rating.offense`, `rating.defense`, `rating.agility`,
-  `rating.consistency`
+- ratings for **this game**: `rating.overall`, `rating.kitchenGame`,
+  `rating.ballControl`, `rating.defense`, `rating.offense`,
+  `rating.courtIQ`, `rating.targeting`
 
 `taggedWith(pattern)` is a method (§5.6).
 
@@ -253,7 +253,9 @@ GROUP BY game.vid, game.sessionNum, game.name
 ```
 
 A game the engine did not rate is unknown, never 0 (§4), so an unrated area
-is skipped by `avg()` rather than reading as a collapse to zero.
+is skipped by `avg()` rather than reading as a collapse to zero. Games rated
+before these areas existed have only `overall`, `offense` and `defense`; the
+other four are unknown on them.
 
 ### 5.5 Calling conventions
 

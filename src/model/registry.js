@@ -638,26 +638,45 @@ const GAME_PROPS = [
   }
 ]
 
-// The skill areas the engine rates a player on for a single game, named as
-// the insights name them so a chart's labels match what the app already
-// calls them. They are the whole point of "which part of my game should I
-// work on": a question that can only be answered by naming an area.
+// The skill areas the engine rates a player on for a single game: its
+// current (version 2) rating categories, keyed as the insights key them and
+// described the way the app describes them, so a chart's labels match what
+// the app already calls them. They are the whole point of "which part of my
+// game should I work on": a question that can only be answered by naming
+// an area. Games rated before these areas existed carry the old set, of
+// which only overall, offense and defense are still read.
 //
 // Each is constant across the game's shots, so avg() over a game returns
 // the rating itself and `GROUP BY game.vid, game.sessionNum, game.name`
 // gives one point per game -- a rating chart in one line of PBQL.
-const RATING_AREAS = {
-  overall: 'overall',
-  serve: 'serving',
-  return: 'returning',
-  offense: 'offense',
-  defense: 'defense',
-  agility: 'movement and court coverage',
-  consistency: 'consistency'
-}
+const RATING_AREAS = [
+  { path: 'overall', key: 'overall', area: 'overall' },
+  {
+    path: 'kitchenGame',
+    key: 'kitchen_game',
+    area: 'Kitchen Game (play at the non-volley zone)'
+  },
+  {
+    path: 'ballControl',
+    key: 'ball_control',
+    area: 'Ball Control (how well they control the ball)'
+  },
+  { path: 'defense', key: 'defense', area: 'Defense (neutralizing attacks)' },
+  { path: 'offense', key: 'offense', area: 'Offense (applying pressure)' },
+  {
+    path: 'courtIQ',
+    key: 'court_iq',
+    area: 'Court IQ (court awareness and decision-making)'
+  },
+  {
+    path: 'targeting',
+    key: 'targeting',
+    area: 'Targeting (how well they place their shots)'
+  }
+]
 
-const RATING_PROPS = Object.entries(RATING_AREAS).map(([key, area]) => ({
-  path: `rating.${key}`,
+const RATING_PROPS = RATING_AREAS.map(({ path, key, area }) => ({
+  path: `rating.${path}`,
   type: 'number',
   unit: 'DUPR',
   doc: `the player's ${area} rating for THIS game (not their career ` +

@@ -206,12 +206,18 @@ describe('registry', () => {
     const props = REGISTRY.player.props
     // p0 is rated on every area
     expect(props.get('rating.overall').extract(farShotCtx, 0)).toBe(3.75)
-    expect(props.get('rating.offense').extract(farShotCtx, 0)).toBe(4)
+    expect(props.get('rating.kitchenGame').extract(farShotCtx, 0)).toBe(3.5)
+    expect(props.get('rating.ballControl').extract(farShotCtx, 0)).toBe(3.25)
     expect(props.get('rating.defense').extract(farShotCtx, 0)).toBe(3)
-    expect(props.get('rating.agility').extract(farShotCtx, 0)).toBe(3.6)
-    expect(props.get('rating.consistency').extract(farShotCtx, 0)).toBe(3.9)
-    expect(props.get('rating.serve').extract(farShotCtx, 0)).toBe(3.5)
-    expect(props.get('rating.return').extract(farShotCtx, 0)).toBe(3.25)
+    expect(props.get('rating.offense').extract(farShotCtx, 0)).toBe(4)
+    expect(props.get('rating.courtIQ').extract(farShotCtx, 0)).toBe(3.6)
+    expect(props.get('rating.targeting').extract(farShotCtx, 0)).toBe(3.9)
+
+    // only the current areas are columns: the ones they replaced are gone
+    // rather than reading unknown on every game rated since
+    for (const retired of ['serve', 'return', 'agility', 'consistency']) {
+      expect(props.get(`rating.${retired}`)).toBeUndefined()
+    }
 
     // An unrated area is UNKNOWN, not 0: charting a missing rating as zero
     // would tell a player their defense collapsed when it was never scored.

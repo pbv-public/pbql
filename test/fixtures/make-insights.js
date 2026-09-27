@@ -68,12 +68,12 @@ export function makeDoublesInsights () {
         trends: {
           ratings: {
             overall: 3.75,
-            serve: 3.5,
-            return: 3.25,
-            offense: 4,
+            kitchen_game: 3.5,
+            ball_control: 3.25,
             defense: 3,
-            agility: 3.6,
-            consistency: 3.9
+            offense: 4,
+            court_iq: 3.6,
+            targeting: 3.9
           }
         }
       },
