@@ -273,7 +273,7 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
 - rally.duration (number [seconds]): how long the rally lasted
 - rally.winner (number [0|1]): which team won the rally
 - rally.allPlayersReachedKitchen (boolean): whether every player reached the kitchen line this rally
-- rally.count(condition) (boolean): how many of the rally's shots satisfy the condition; inside it, shot (and every player position) refers to each shot of the rally in turn, and shots where the condition is unknown are not counted
+- rally.count(condition) (number): how many of the rally's shots satisfy the condition; inside it, shot (and every player position) refers to each shot of the rally in turn, and shots where the condition is unknown are not counted
 - game.vid (string): the video ID this game is from
 - game.sessionNum (number [1-based]): which game of the video this is
 - game.name (string): the video/session name, if any

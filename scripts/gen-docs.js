@@ -323,7 +323,7 @@ function generateLlmsTxt ({ withCli = true } = {}) {
     }
     for (const m of entry.methodList) {
       const args = m.args.map(a => a.name).join(', ')
-      parts.push(`- ${objName}.${m.name}(${args}) (boolean): ${m.doc}`)
+      parts.push(`- ${objName}.${m.name}(${args}) (${m.type ?? 'boolean'}): ${m.doc}`)
     }
   }
   parts.push('', '## Examples', '')

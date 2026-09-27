@@ -139,4 +139,13 @@ describe('LLM_GUIDE', () => {
     expect(LLM_GUIDE).toContain('## Data Dictionary')
     expect(LLM_GUIDE).toContain('## Examples')
   })
+
+  test('methods carry their real return type, not a blanket boolean', async () => {
+    const { LLM_GUIDE } = await import('../src/index.js')
+    // rally.count() is the numeric method, and the whole point of it is
+    // comparing the count: telling a model it returns a boolean is worse
+    // than saying nothing
+    expect(LLM_GUIDE).toContain('rally.count(condition) (number):')
+    expect(LLM_GUIDE).toContain('shot.taggedWith(pattern) (boolean):')
+  })
 })
