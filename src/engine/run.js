@@ -219,7 +219,8 @@ function projectGrouped (query, selected) {
 }
 
 // Collects the facts about a query that depend on per-game player metadata:
-// whether it references "me"/"my…" (needs meta.myPlayerIdx) and each literal
+// whether it references "me"/"my…" (needs meta.myPlayerIdx), each player("Name")
+// (needs exactly one player of that name in the game) and each literal
 // taggedWith() pattern (needs a matching tagged player in the game).
 function collectPlayerFacts (node, facts) {
   if (Array.isArray(node)) {
@@ -231,8 +232,10 @@ function collectPlayerFacts (node, facts) {
   }
   if (node.kind === 'prop') {
     const { base } = node
-    if (base.object === 'player') { // the only player root is `me`
+    if (base.object === 'player' && base.root === 'me') {
       facts.referencesMe = true
+    } else if (base.object === 'player') {
+      facts.playerNames.add(base.name)
     }
     // taggedWith is always the final path segment of a method call; the
     // analyzer has already held its argument to a string, so a literal
@@ -259,6 +262,18 @@ function playerWarnings (facts, game) {
     warn('PBQL_ME_NOT_TAGGED',
       '"me" is not tagged in this game, so conditions using "me" or "my…" ' +
       'players are unknown here')
+  }
+  for (const name of facts.playerNames) {
+    const count = game.playersNamed(name).length
+    if (count === 0) {
+      warn('PBQL_PLAYER_NOT_FOUND',
+        `no player in this game is named "${name}", so player("${name}") is ` +
+        'unknown here')
+    } else if (count > 1) {
+      warn('PBQL_PLAYER_AMBIGUOUS',
+        `${count} players in this game are named "${name}", so ` +
+        `player("${name}") is unknown here`)
+    }
   }
   for (const pattern of facts.tagPatterns) {
     const matches = [0, 1, 2, 3].some(playerIdx =>
@@ -405,7 +420,9 @@ export function runQuery ({ text, games }) {
 function runBranch (query, wrapped, warnings) {
   // warn per game about player references that cannot resolve there (the
   // conditions themselves still evaluate to unknown — see playerWarnings)
-  const facts = { referencesMe: false, tagPatterns: new Set() }
+  const facts = {
+    referencesMe: false, playerNames: new Set(), tagPatterns: new Set()
+  }
   for (const part of [query.where, query.select, query.groupBy, query.orderBy]) {
     collectPlayerFacts(part, facts)
   }

@@ -170,6 +170,11 @@ FROM "83gyqyc10y8f"
 WHERE shot.hitter.name = "Joe"
 GROUP BY shot.type
 
+# Q: How many rallies did Chris's team win? (one row per rally: its serve)
+SELECT count() AS "rallies won"
+FROM "83gyqyc10y8f"
+WHERE shot.num = 1 AND rally.winner = player("Chris").team
+
 # Q: What percentage of rallies does my team win by the shot type I open with?
 SELECT shot.type, avg(rally.winner = me.team) * 100 AS "win %"
 FROM "83gyqyc10y8f"

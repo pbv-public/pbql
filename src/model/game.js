@@ -131,6 +131,24 @@ export class Game {
       `Player ${playerIdx + 1}`
   }
 
+  // Every player listed under `name`, exactly as playerName gives it (so
+  // an untagged "Player 3" is found by that name too)
+  playersNamed (name) {
+    this.namedPlayers ??= new Map()
+    if (!this.namedPlayers.has(name)) {
+      this.namedPlayers.set(name, [0, 1, 2, 3].filter(playerIdx =>
+        this.playerName(playerIdx) === name))
+    }
+    return this.namedPlayers.get(name)
+  }
+
+  // player("Name"): the one player of that name, or undefined when the game
+  // has none or several (the query warns which)
+  playerNamed (name) {
+    const players = this.playersNamed(name)
+    return players.length === 1 ? players[0] : undefined
+  }
+
   playerTeam (playerIdx) {
     // convention: players 0-1 are team 0, players 2-3 are team 1
     return this.insights.player_data?.[playerIdx]?.team ?? (playerIdx < 2 ? 0 : 1)

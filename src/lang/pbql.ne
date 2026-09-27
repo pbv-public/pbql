@@ -172,14 +172,16 @@ propExpr -> objectRef segs callArgs:?
        return node
      } %}
 # object roots: shot/rally (with optional relative index), game, and the
-# `me` player-root. `hitter`, `teammate`, `opponent*` are ordinary path
-# segments (segName), so player navigation like `shot.hitter.opponentLHS`
-# is just a base plus a path — see docs §5.4.
+# player roots `me` and `player("Name")`. `hitter`, `teammate`, `opponent*`
+# are ordinary path segments (segName), so player navigation like
+# `shot.hitter.opponentLHS` is just a base plus a path — see docs §5.4.
 objectRef ->
     %kw_shot index:?  {% d => ({ object: 'shot', offset: d[1] ?? 0, loc: loc(d[0]) }) %}
   | %kw_rally index:? {% d => ({ object: 'rally', offset: d[1] ?? 0, loc: loc(d[0]) }) %}
   | %kw_game          {% d => ({ object: 'game', loc: loc(d[0]) }) %}
   | %kw_me            {% d => ({ object: 'player', root: 'me', loc: loc(d[0]) }) %}
+  | %kw_player %leftParen string %rightParen
+    {% d => ({ object: 'player', root: 'player', name: d[2], loc: loc(d[0]) }) %}
 index -> %leftBracket %minus:? int %rightBracket
   {% d => d[1] ? -d[2] : d[2] %}
 segs ->
@@ -207,6 +209,7 @@ segName ->
   | %kw_rally   {% d => d[0].text %}
   | %kw_game    {% d => d[0].text %}
   | %kw_me      {% d => d[0].text %}
+  | %kw_player  {% d => d[0].text %}
   | %unit_secs  {% d => d[0].text %}
   | %unit_shots {% d => d[0].text %}
 callExpr -> %identifier callArgs

@@ -29,7 +29,8 @@ const KEYWORDS = {
   kw_shot: 'shot', // the shot object; also the singular duration unit alias
   kw_rally: 'rally', // the rally object; also the to-rally-boundary duration
   kw_game: 'game',
-  kw_me: 'me', // the querying user — the one player-root keyword
+  kw_me: 'me', // the querying user, a player root
+  kw_player: 'player', // player("Name"), the player root for anyone by name
   unit_secs: ['secs', 'seconds', 'sec'], // aliases canonicalize to "secs"
   unit_shots: 'shots'
 }

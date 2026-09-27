@@ -11,7 +11,7 @@ const identArb = fc.constantFrom('speed', 'isVolley', 'quality', 'x', 'foo_2')
 // (`hitter`, `teammate`, `me`, …), which are ordinary segments in the AST
 const segArb = fc.constantFrom(
   'speed', 'overall', 'video', 'true', 'from', 'secs',
-  'hitter', 'teammate', 'opponentLHS', 'me')
+  'hitter', 'teammate', 'opponentLHS', 'me', 'player')
 const stringArb = fc.stringMatching(/^[ -~]{0,12}$/) // printable ascii incl. " and \
 const numberArb = fc.oneof(
   fc.integer({ min: 0, max: 9999 }),
@@ -29,8 +29,12 @@ const inLiteralArb = fc.oneof(
 
 const baseArb = fc.oneof(
   fc.record({ object: fc.constant('game') }),
-  // the sole player root is `me`; hitter/teammate/opponent… ride in the path
+  // the player roots are `me` and player("Name"); hitter/teammate/
+  // opponent… ride in the path
   fc.record({ object: fc.constant('player'), root: fc.constant('me') }),
+  fc.record({
+    object: fc.constant('player'), root: fc.constant('player'), name: stringArb
+  }),
   fc.record({
     object: fc.constantFrom('shot', 'rally'),
     offset: fc.integer({ min: -3, max: 3 })

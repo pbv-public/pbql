@@ -56,8 +56,10 @@ function evalProp (node, ctx) {
   let type = base.object
   let subCtx = ctx // the shot/rally moment scalar props are measured at
   let playerIdx // set once the cursor sits on a player
-  if (base.object === 'player') { // the `me` root
-    playerIdx = ctx.game.myPlayerIdx
+  if (base.object === 'player') { // `me` or player("Name")
+    playerIdx = base.root === 'me'
+      ? ctx.game.myPlayerIdx
+      : ctx.game.playerNamed(base.name)
     if (playerIdx === undefined) {
       return UNKNOWN
     }

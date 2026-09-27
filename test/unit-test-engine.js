@@ -931,6 +931,62 @@ describe('runQuery: inputs and errors', () => {
     ])
   })
 
+  test('player("Name") is that player, whichever side they played', () => {
+    // Alice and Bob are team 0, Carol and Dan team 1; team 0 won rallies 1
+    // and 3, team 1 rally 2
+    const games = [makeDoublesGame()]
+    const winsFor = name => runQuery({
+      text: 'SELECT count() FROM "x" WHERE shot.num = 1 AND ' +
+        `rally.winner = player("${name}").team`,
+      games
+    })
+    expect(winsFor('Carol').rows).toEqual([[1]])
+    expect(winsFor('Bob').rows).toEqual([[2]])
+    expect(winsFor('Carol').warnings).toEqual([])
+    // ...and it compares as an identity, like me
+    const dans = runQuery({
+      text: 'SELECT count() FROM "x" WHERE shot.hitter = player("Dan")', games
+    })
+    const byId = runQuery({
+      text: 'SELECT count() FROM "x" WHERE shot.hitter.id = 3', games
+    })
+    expect(dans.rows).toEqual(byId.rows)
+    // an untagged slot answers to the name the app shows for it
+    const untagged = makeDoublesGame()
+    untagged.meta = { players: [null, null, null, null] }
+    expect(runQuery({
+      text: 'SELECT count() FROM "x" WHERE shot.num = 1 AND ' +
+        'rally.winner = player("Player 3").team',
+      games: [untagged]
+    }).rows).toEqual([[1]])
+  })
+
+  test('player("Name") warns when the game has no one, or several, by that name', () => {
+    const missing = runQuery({
+      text: 'FROM "x" WHERE shot.hitter = player("Zed")',
+      games: [makeDoublesGame()]
+    })
+    expect(missing.shots).toEqual([])
+    expect(missing.warnings).toEqual([expect.objectContaining({
+      code: 'PBQL_PLAYER_NOT_FOUND',
+      message: expect.stringContaining('player("Zed")')
+    })])
+    const twins = makeDoublesGame()
+    twins.meta = {
+      ...twins.meta,
+      players: [{ name: 'Sam' }, { name: 'Sam' }, { name: 'Carol' }, { name: 'Dan' }]
+    }
+    const ambiguous = runQuery({
+      text: 'FROM "x" WHERE shot.hitter = player("Sam")', games: [twins]
+    })
+    // never a guess between the two: unknown, and the warning says why
+    expect(ambiguous.shots).toEqual([])
+    expect(ambiguous.warnings).toEqual([expect.objectContaining({
+      code: 'PBQL_PLAYER_AMBIGUOUS',
+      message: expect.stringContaining('2 players in this game are named "Sam"')
+    })])
+  })
+
   test('propagates parse and analyze errors', () => {
     expect(runQuery({ text: 'FROM @', games: [] }).errors[0].code)
       .toBe('PBQL_LEX_ERROR')

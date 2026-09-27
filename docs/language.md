@@ -208,6 +208,11 @@ compare by identity.
 
 - `me` — the querying user (resolved by the host application; unknown if the
   user isn't tagged in the game).
+- `player("Name")` — the player listed under that name in each game (the
+  tagged name, or "Player N" for an untagged slot, exactly as the app shows
+  it). It resolves game by game, so across several games it follows the
+  person to whichever side they played. It is unknown, with a warning, in a
+  game where no player has that name or more than one does.
 - `shot.hitter` — the player who hit that shot. Because `hitter` is a
   property of a shot, it composes with relative shots: `shot[1].hitter`
   targets the *next* shot's hitter, `shot[-1].hitter` the previous one.
