@@ -75,6 +75,36 @@ describe('toShotExplorerURLs', () => {
     expect(() => toShotExplorerURLs('q', ['ab12cd34ef56:0']))
       .toThrow('"ab12cd34ef56:0": session numbers are 1-based')
   })
+
+  // the link's ?q= body, decoded
+  const bodies = urls => urls.map(url => new URL(url).searchParams.get('q'))
+
+  test('a UNION link keeps only the branches that read its game', () => {
+    const text = 'FROM "aaaaaaaaaaaa:1" WHERE rally.num = 2\n' +
+      'UNION ALL FROM "bbbbbbbbbbbb:1" WHERE rally.num = 16\n' +
+      'UNION ALL FROM "cccccccccccc:1" WHERE rally.num = 30'
+    expect(bodies(toShotExplorerURLs(text,
+      ['aaaaaaaaaaaa:1', 'bbbbbbbbbbbb:1', 'cccccccccccc:1'])))
+      .toEqual(['WHERE rally.num = 2', 'WHERE rally.num = 16', 'WHERE rally.num = 30'])
+  })
+
+  test('a game read by several branches keeps them as a UNION', () => {
+    const text = 'FROM "aaaaaaaaaaaa" WHERE shot.isVolley LIMIT 2\n' +
+      'UNION FROM "bbbbbbbbbbbb" WHERE shot.isVolley\n' +
+      'UNION ALL FROM "aaaaaaaaaaaa", "bbbbbbbbbbbb" WHERE shot.num = 3'
+    expect(bodies(toShotExplorerURLs(text, ['aaaaaaaaaaaa', 'bbbbbbbbbbbb'])))
+      .toEqual([
+        'WHERE shot.isVolley\nLIMIT 2\nUNION ALL\nWHERE shot.num = 3',
+        'WHERE shot.isVolley\nUNION ALL\nWHERE shot.num = 3'
+      ])
+  })
+
+  test('a single-game UNION link keeps every branch', () => {
+    const text = 'FROM "aaaaaaaaaaaa:1" WHERE shot.isVolley\n' +
+      'UNION ALL FROM "aaaaaaaaaaaa:1" WHERE shot.num = 3 LIMIT 5'
+    expect(bodies(toShotExplorerURLs(text, ['aaaaaaaaaaaa:1'])))
+      .toEqual(['WHERE shot.isVolley\nUNION ALL\nWHERE shot.num = 3\nLIMIT 5'])
+  })
 })
 
 describe('LLM_GUIDE', () => {
