@@ -164,6 +164,12 @@ FROM "83gyqyc10y8f"
 WHERE shot.hitter = me
 GROUP BY shot.type
 
+# Q: Joe's win rate by the shot type he hit (his team, whichever side he played)
+SELECT shot.type, avg(rally.winner = shot.hitter.team) * 100 AS "win %", count()
+FROM "83gyqyc10y8f"
+WHERE shot.hitter.name = "Joe"
+GROUP BY shot.type
+
 # Q: What percentage of rallies does my team win by the shot type I open with?
 SELECT shot.type, avg(rally.winner = me.team) * 100 AS "win %"
 FROM "83gyqyc10y8f"
@@ -194,9 +200,9 @@ WHERE rally.num > game.numRallies / 2
 FROM "83gyqyc10y8f"
 WHERE exists(rally[-1].winner) AND rally[-1].winner != me.team
 
-# Q: Shots from rallies where team 0 went on to win the very next rally
+# Q: Shots from rallies where my team went on to win the very next rally
 FROM "83gyqyc10y8f"
-WHERE rally[1].winner = 0
+WHERE rally[1].winner = me.team
 
 # Q: The five fastest shots
 FROM "83gyqyc10y8f"

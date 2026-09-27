@@ -154,6 +154,15 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
   at the player to compare identities with = / != (shot.hitter = me,
   shot[1].hitter.name = "Joe"). taggedWith is a player/shot method
   (shot.hitter.taggedWith("Anna*")).
+- A team number belongs to one game: team 0 is whoever played one side of
+  THAT video, so it can be different people in each game, and a literal
+  0 or 1 in a query is only as right as your guess of who that is. Name
+  the team through a player instead: rally.winner = me.team for the
+  asker's team, rally.winner = shot.hitter.team for the team of the
+  shot's hitter (one player's win rate by shot type is
+  avg(rally.winner = shot.hitter.team) over their shots). Write a
+  literal team number only when the question itself names the team by
+  its number.
 - Forehand/backhand questions: shot.strokeType needs the hitter's
   handedness, which only host-augmented insights carry — it is unknown
   otherwise. shot.strokeSide ("left"/"right" side of the body) always
@@ -500,6 +509,13 @@ Q: My win rate by shot type — how do rallies go when I hit each kind of shot?
     WHERE shot.hitter = me
     GROUP BY shot.type
 
+Q: Joe's win rate by the shot type he hit (his team, whichever side he played)
+
+    SELECT shot.type, avg(rally.winner = shot.hitter.team) * 100 AS "win %", count()
+    FROM "83gyqyc10y8f"
+    WHERE shot.hitter.name = "Joe"
+    GROUP BY shot.type
+
 Q: What percentage of rallies does my team win by the shot type I open with?
 
     SELECT shot.type, avg(rally.winner = me.team) * 100 AS "win %"
@@ -536,10 +552,10 @@ Q: Shots from every rally that came right after a rally my team lost
     FROM "83gyqyc10y8f"
     WHERE exists(rally[-1].winner) AND rally[-1].winner != me.team
 
-Q: Shots from rallies where team 0 went on to win the very next rally
+Q: Shots from rallies where my team went on to win the very next rally
 
     FROM "83gyqyc10y8f"
-    WHERE rally[1].winner = 0
+    WHERE rally[1].winner = me.team
 
 Q: The five fastest shots
 
