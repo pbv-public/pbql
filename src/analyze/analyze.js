@@ -151,7 +151,9 @@ function inferType (node) {
         return method?.type
       }
       if (rest.length === 0) {
-        return undefined // player identities compare loosely
+        // a path ending at a player is its identity, which compares only
+        // with another player (a bare shot/rally is reported elsewhere)
+        return typeName === 'player' ? 'player' : undefined
       }
       return REGISTRY[typeName].props.get(rest.join('.'))?.type
     }
@@ -236,7 +238,8 @@ export function analyze (query) {
           const rhsType = inferType(node.rhs)
           if (lhsType !== undefined && rhsType !== undefined && lhsType !== rhsType) {
             err(node, 'PBQL_TYPE_MISMATCH',
-              `cannot compare ${lhsType} with ${rhsType}`)
+              `cannot compare ${lhsType} with ${rhsType}`,
+              playerHint(node.lhs, node.rhs))
           } else if (ORDERING_OPS.has(node.op)) {
             for (const type of [lhsType, rhsType]) {
               if (type !== undefined && type !== 'number') {
@@ -264,7 +267,8 @@ export function analyze (query) {
           // eslint-disable-next-line valid-typeof -- lhsType is a typeof string
           if (lhsType !== undefined && typeof value !== lhsType) {
             err(node, 'PBQL_TYPE_MISMATCH',
-              `IN list mixes ${typeof value} with ${lhsType}`)
+              `IN list mixes ${typeof value} with ${lhsType}`,
+              playerHint(node.lhs))
             break
           }
         }
@@ -402,6 +406,19 @@ export function analyze (query) {
   function hintFor (name, candidates) {
     const match = suggest(name, candidates)
     return match === undefined ? undefined : `did you mean "${match}"?`
+  }
+
+  // A player is an identity, not its id or name: steer a player compared
+  // with a literal (shot.hitter = 3) to another player or to a property
+  function playerHint (...sides) {
+    const player = sides.find(side => inferType(side) === 'player')
+    if (player === undefined) {
+      return undefined
+    }
+    const ref = printExpr(player)
+    return 'a player compares only with another player (e.g. shot.hitter = ' +
+      `me); to compare a value, read one of its properties (e.g. ${ref}.id, ` +
+      `${ref}.name, ${ref}.team)`
   }
 
   // Flags a literal an enum-typed subject can never hold (production never

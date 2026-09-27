@@ -168,6 +168,42 @@ describe('analyze()', () => {
     expect(analyzeWhere('me = shot.hitter')).toEqual([])
   })
 
+  test('a player compares only with another player', () => {
+    // a player id is not the player: shot.hitter = 3 matched only by luck
+    expect(analyzeWhere('shot.hitter = 3')[0]).toEqual({
+      code: 'PBQL_TYPE_MISMATCH',
+      message: 'cannot compare player with number',
+      line: 1,
+      col: 28,
+      length: 0,
+      hint: 'a player compares only with another player (e.g. shot.hitter = ' +
+        'me); to compare a value, read one of its properties (e.g. ' +
+        'shot.hitter.id, shot.hitter.name, shot.hitter.team)'
+    })
+    // either side, every literal type, IN lists; the hint names the player
+    expect(analyzeWhere('"Anna" = me.teammate')[0]).toMatchObject({
+      message: 'cannot compare string with player',
+      hint: expect.stringContaining('me.teammate.name')
+    })
+    expect(analyzeWhere('me != true')[0].message)
+      .toBe('cannot compare player with boolean')
+    expect(analyzeWhere('shot[1].hitter IN (2, 3)')[0]).toMatchObject({
+      code: 'PBQL_TYPE_MISMATCH',
+      message: 'IN list mixes number with player',
+      hint: expect.stringContaining('shot[1].hitter.id')
+    })
+    // players have no order, and are not a string argument
+    expect(analyzeWhere('shot.hitter < me')[0].message)
+      .toBe('"<" needs numbers, not player')
+    expect(analyzeWhere('shot.taggedWith(me)')[0].message)
+      .toBe('taggedWith() takes a string pattern, not player')
+    // a mismatch without a player carries no hint
+    expect(analyzeWhere('shot.num IN (1, "x")')[0].hint).toBeUndefined()
+    // reading a property off the player is the way to compare a value
+    expect(analyzeWhere('shot.hitter.id = 3 AND me.name = "Anna" AND ' +
+      'shot.hitter.team IN (0, 1) AND shot.hitter = me.teammate')).toEqual([])
+  })
+
   test('exists() on a bare shot/rally reference hints at .num', () => {
     const [error] = analyzeWhere('exists(shot[1])')
     expect(error).toMatchObject({

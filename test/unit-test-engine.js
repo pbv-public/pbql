@@ -183,8 +183,9 @@ describe('runQuery: filtering', () => {
     // unknown or negative seconds are unknown
     expect(shotsWhere('NOT exists(timecode(shot.speed))')).toEqual([[1, 1]])
     expect(shotsWhere('exists(timecode(0 - 1))')).toEqual([])
-    // a non-boolean withFrames is unknown (me evaluates to a player index)
-    expect(shotsWhere('exists(timecode(1, me))')).toEqual([])
+    // a non-boolean withFrames is unknown (min() is untyped, so only the
+    // engine sees that it is a number)
+    expect(shotsWhere('exists(timecode(1, min(1, 2)))')).toEqual([])
     // an unknown flag is unknown; known flags pick the format per shot
     // (is_volley is only present on rally 0 and (2,2))
     expect(shotsWhere('timecode(61.5, shot.isVolley) IN ("1:01", "1:01:15")'))

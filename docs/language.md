@@ -147,7 +147,9 @@ Comparisons require matching types (comparing a number to a string is a
 validation error, not `false`). Method arguments are held to their declared
 type the same way (`shot.taggedWith(5)` is a validation error). Strings
 compare case-sensitively with `=` and `!=` only. Players compare with
-`=`/`!=` by identity (`shot.hitter = me`).
+`=`/`!=` by identity, and only with another player (`shot.hitter = me`):
+a player is not its id or name, so `shot.hitter = 3` is a validation error.
+Read a property to compare a value (`shot.hitter.id = 3`).
 
 String properties with an enumerated value set (the quoted alternatives in
 the [Data Dictionary](data-dictionary.md)'s unit column, e.g.
