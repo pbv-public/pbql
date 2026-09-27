@@ -111,14 +111,19 @@ function suggest (name, candidates) {
     : undefined
 }
 
-// A unit string made solely of quoted alternatives ('"dig"|"neutral"|…')
-// declares the property's complete enum — production never emits anything
-// else, so the analyzer rejects other literals outright. Any other unit
-// (a measure like 'feet', a range like '0-1') returns undefined.
+// A unit string made solely of quoted alternatives ('"dig"|"neutral"|…') or
+// of integer alternatives ('0|1', a team) declares the property's complete
+// enum — production never emits anything else, so the analyzer rejects other
+// literals outright. Any other unit (a measure like 'feet', a range like
+// '0-1') returns undefined.
 export function enumValuesOf (unit) {
-  return unit !== undefined && /^"[^"]+"(\|"[^"]+")*$/.test(unit)
-    ? unit.slice(1, -1).split('"|"')
-    : undefined
+  if (unit === undefined) {
+    return undefined
+  }
+  if (/^"[^"]+"(\|"[^"]+")*$/.test(unit)) {
+    return unit.slice(1, -1).split('"|"')
+  }
+  return /^\d+(\|\d+)+$/.test(unit) ? unit.split('|').map(Number) : undefined
 }
 
 // the enum of a scalar-property reference, or undefined for anything else
@@ -399,18 +404,18 @@ export function analyze (query) {
     return match === undefined ? undefined : `did you mean "${match}"?`
   }
 
-  // Flags a string literal an enum-typed subject can never hold (production
-  // never writes it, so the comparison could only ever be false/unknown).
-  // Non-string literals are left to the type checks. Returns whether an
+  // Flags a literal an enum-typed subject can never hold (production never
+  // writes it, so the comparison could only ever be false/unknown). A
+  // literal of another type is left to the type checks. Returns whether an
   // error was reported.
   function checkEnumValue (node, values, subject, value) {
-    if (typeof value !== 'string' || values.includes(value)) {
+    if (typeof value !== typeof values[0] || values.includes(value)) {
       return false
     }
     err(node, 'PBQL_UNKNOWN_ENUM_VALUE',
       `${subject} is never ${JSON.stringify(value)} ` +
       `(valid: ${values.map(v => JSON.stringify(v)).join(', ')})`,
-      hintFor(value, values))
+      typeof value === 'string' ? hintFor(value, values) : undefined)
     return true
   }
 

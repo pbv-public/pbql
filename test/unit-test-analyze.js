@@ -278,6 +278,27 @@ describe('analyze()', () => {
     expect(analyzeWhere('shot.type IN ("smash", "drive")')).toEqual([])
   })
 
+  test('team properties reject numbers that are not a team', () => {
+    // a player's id (0-3) is not a team: this counted zero wins in a real chat
+    expect(analyzeQuery('SELECT sum(rally.winner = 3) FROM "f" WHERE true')[0])
+      .toEqual({
+        code: 'PBQL_UNKNOWN_ENUM_VALUE',
+        message: 'rally.winner is never 3 (valid: 0, 1)',
+        line: 1,
+        col: 25,
+        length: 0
+      })
+    expect(analyzeWhere('game.winner != 2')[0].message)
+      .toBe('game.winner is never 2 (valid: 0, 1)')
+    expect(analyzeWhere('shot.hitter.team IN (0, 2)')[0].message)
+      .toBe('shot.hitter.team is never 2 (valid: 0, 1)')
+    expect(analyzeWhere('rally.winner = 1 AND 0 = me.team')).toEqual([])
+    expect(analyzeWhere('rally.winner = me.team')).toEqual([])
+    // a string is the type check's business, not the enum's
+    expect(analyzeWhere('rally.winner = "us"').map(e => e.code))
+      .toEqual(['PBQL_TYPE_MISMATCH'])
+  })
+
   test('every declared enum value passes for every enum property', () => {
     const roots = { shot: 'shot', rally: 'rally', game: 'game', player: 'me' }
     let checked = 0

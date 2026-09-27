@@ -155,8 +155,11 @@ the [Data Dictionary](data-dictionary.md)'s unit column, e.g.
 comparing one (`=`, `!=`, `IN`) with a string literal outside its set — or
 passing such a literal to an enum-typed method argument like
 `inHighlight(kind)` — is a validation error, since production data can
-never hold it. Non-literal comparisons (`shot.from.zone = shot.to.zone`)
-are allowed.
+never hold it. The team properties work the same way with numbers:
+`rally.winner`, `game.winner` and a player's `team` are only ever `0` or
+`1`, so `rally.winner = 3` is a validation error (compare with a team
+instead: `rally.winner = me.team`). Non-literal comparisons
+(`shot.from.zone = shot.to.zone`) are allowed.
 
 ## 5. Objects
 
