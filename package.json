@@ -1,6 +1,6 @@
 {
   "name": "@pbvision/pbql",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "PBQL is a SQL-like language for querying shots in pickleball games analyzed by PB Vision.",
   "license": "Apache-2.0",
   "type": "module",
