@@ -161,11 +161,16 @@ never hold it. Non-literal comparisons (`shot.from.zone = shot.to.zone`)
 are allowed.
 
 The team properties (`rally.winner`, `game.winner` and a player's `team`)
-never compare with a number, in any comparison or `IN` list: team 0 is
-whoever played one side of one video, so a number is a guess at who that
-was, and across several games it is different people in each. Name the
-team through a player instead: `rally.winner = me.team`,
+are only ever `0` or `1`, so `rally.winner = 3` is a validation error. And
+team 0 is whoever played one side of one video, so in a query that reads
+more than one game (more than one `FROM` source) it is different people in
+each: there a team never compares with a number, in any comparison or `IN`
+list. Name the team through a player instead: `rally.winner = me.team`,
 `rally.winner = shot.hitter.team`, `rally.winner = player("Chris").team`.
+A host whose queries a model writes can reject team numbers in one-game
+queries too (`validate(text, { rejectTeamNumbers: true })`,
+`runQuery({ …, rejectTeamNumbers: true })`), since the model is guessing
+who played on which side.
 
 ## 5. Objects
 

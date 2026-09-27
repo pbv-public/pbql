@@ -114,7 +114,7 @@ function suggest (name, candidates) {
 // A unit string made solely of quoted alternatives ('"dig"|"neutral"|…') or
 // of integer alternatives ('0|1', a team) declares the property's complete
 // enum — production never emits anything else, so the analyzer rejects other
-// string literals outright, and a team takes no number literal at all (see
+// literals outright (and where a team may not hold a number at all, see
 // checkTeamLiteral). Any other unit (a measure like 'feet', a range like
 // '0-1') returns undefined.
 export function enumValuesOf (unit) {
@@ -201,13 +201,23 @@ function isDefaultContext ({ before, after }) {
   return isZero(before) && isZero(after)
 }
 
-export function analyze (query) {
+/**
+ * @param {object} query a parsed query (parse().ast)
+ * @param {object} [options]
+ * @param {boolean} [options.rejectTeamNumbers] reject a team compared with
+ *   a number in every query, not only in one that reads several games (for
+ *   hosts whose queries are written by a model guessing who played where)
+ * @returns {{errors: Array}}
+ */
+export function analyze (query, options = {}) {
   // A UNION is its branches, each a whole query analyzed on its own; their
   // positions already point into the shared text. Whether the branches'
   // shapes agree is a property of their results, which the engine checks
   // once it has them.
   if (query.kind === 'union') {
-    return { errors: query.branches.flatMap(b => analyze(b.query).errors) }
+    return {
+      errors: query.branches.flatMap(b => analyze(b.query, options).errors)
+    }
   }
   const errors = []
   const err = (node, code, message, hint) => {
@@ -435,13 +445,20 @@ export function analyze (query) {
       `${ref}.name, ${ref}.team)`
   }
 
-  // A team (rally.winner, game.winner, a player's team) never compares
-  // with a number. Team 0 is whoever played one side of one video, so the
-  // number is a guess at who that was, and across games it is different
-  // people in each; the team is named through a player instead. Reports
-  // and returns true when `subject` is a team and one of `others` is a
-  // number literal.
+  // A team (rally.winner, game.winner, a player's team) compared with a
+  // number. Team 0 is whoever played one side of one video, so across
+  // several games it is different people in each: a query reading more
+  // than one game names the team through a player instead. Within one
+  // game the number is only as right as whoever wrote it knew the sides,
+  // which a program mapping a selected player to their team does and a
+  // model guessing does not, so a host can reject it there too
+  // (options.rejectTeamNumbers). Reports and returns true when `subject`
+  // is a team, one of `others` is a number literal, and the query may not
+  // hold one.
   function checkTeamLiteral (node, subject, others) {
+    if (query.sources.length < 2 && !options.rejectTeamNumbers) {
+      return false
+    }
     const values = enumOf(subject)
     const number = others.find(other =>
       other.kind === 'lit' && typeof other.value === 'number')
@@ -469,7 +486,7 @@ export function analyze (query) {
     err(node, 'PBQL_UNKNOWN_ENUM_VALUE',
       `${subject} is never ${JSON.stringify(value)} ` +
       `(valid: ${values.map(v => JSON.stringify(v)).join(', ')})`,
-      hintFor(value, values))
+      typeof value === 'string' ? hintFor(value, values) : undefined)
     return true
   }
 

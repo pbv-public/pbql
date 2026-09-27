@@ -990,6 +990,14 @@ describe('runQuery: inputs and errors', () => {
     })])
   })
 
+  test('a host can reject team numbers in a one-game query', () => {
+    const text = 'SELECT count() FROM "x" WHERE rally.winner = 0'
+    const games = [makeDoublesGame()]
+    expect(runQuery({ text, games }).errors).toBeUndefined()
+    expect(runQuery({ text, games, rejectTeamNumbers: true }).errors
+      .map(e => e.code)).toEqual(['PBQL_TEAM_NUMBER'])
+  })
+
   test('propagates parse and analyze errors', () => {
     expect(runQuery({ text: 'FROM @', games: [] }).errors[0].code)
       .toBe('PBQL_LEX_ERROR')
