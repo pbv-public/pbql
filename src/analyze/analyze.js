@@ -114,7 +114,8 @@ function suggest (name, candidates) {
 // A unit string made solely of quoted alternatives ('"dig"|"neutral"|…') or
 // of integer alternatives ('0|1', a team) declares the property's complete
 // enum — production never emits anything else, so the analyzer rejects other
-// literals outright. Any other unit (a measure like 'feet', a range like
+// string literals outright, and a team takes no number literal at all (see
+// checkTeamLiteral). Any other unit (a measure like 'feet', a range like
 // '0-1') returns undefined.
 export function enumValuesOf (unit) {
   if (unit === undefined) {
@@ -124,6 +125,12 @@ export function enumValuesOf (unit) {
     return unit.slice(1, -1).split('"|"')
   }
   return /^\d+(\|\d+)+$/.test(unit) ? unit.split('|').map(Number) : undefined
+}
+
+// an integer value set is a team's (rally.winner, game.winner and a
+// player's team are the only properties that have one)
+function isTeam (values) {
+  return typeof values[0] === 'number'
 }
 
 // the enum of a scalar-property reference, or undefined for anything else
@@ -240,6 +247,9 @@ export function analyze (query) {
             err(node, 'PBQL_TYPE_MISMATCH',
               `cannot compare ${lhsType} with ${rhsType}`,
               playerHint(node.lhs, node.rhs))
+          } else if (checkTeamLiteral(node, node.lhs, [node.rhs]) ||
+            checkTeamLiteral(node, node.rhs, [node.lhs])) {
+            // reported: a team compared with a number
           } else if (ORDERING_OPS.has(node.op)) {
             for (const type of [lhsType, rhsType]) {
               if (type !== undefined && type !== 'number') {
@@ -271,6 +281,10 @@ export function analyze (query) {
               playerHint(node.lhs))
             break
           }
+        }
+        if (checkTeamLiteral(node, node.lhs,
+          node.list.map(value => ({ kind: 'lit', value })))) {
+          return
         }
         const values = enumOf(node.lhs)
         for (const value of values === undefined ? [] : node.list) {
@@ -421,6 +435,29 @@ export function analyze (query) {
       `${ref}.name, ${ref}.team)`
   }
 
+  // A team (rally.winner, game.winner, a player's team) never compares
+  // with a number. Team 0 is whoever played one side of one video, so the
+  // number is a guess at who that was, and across games it is different
+  // people in each; the team is named through a player instead. Reports
+  // and returns true when `subject` is a team and one of `others` is a
+  // number literal.
+  function checkTeamLiteral (node, subject, others) {
+    const values = enumOf(subject)
+    const number = others.find(other =>
+      other.kind === 'lit' && typeof other.value === 'number')
+    if (values === undefined || !isTeam(values) || number === undefined) {
+      return false
+    }
+    const ref = printExpr(subject)
+    err(node, 'PBQL_TEAM_NUMBER',
+      `compare ${ref} with a player's team, not the number ${number.value}`,
+      'a team number only names one side of one video (and different ' +
+      'people in each game): say whose team, e.g. ' +
+      `${ref} = me.team, ${ref} = shot.hitter.team or ` +
+      `${ref} = player("Name").team`)
+    return true
+  }
+
   // Flags a literal an enum-typed subject can never hold (production never
   // writes it, so the comparison could only ever be false/unknown). A
   // literal of another type is left to the type checks. Returns whether an
@@ -432,7 +469,7 @@ export function analyze (query) {
     err(node, 'PBQL_UNKNOWN_ENUM_VALUE',
       `${subject} is never ${JSON.stringify(value)} ` +
       `(valid: ${values.map(v => JSON.stringify(v)).join(', ')})`,
-      typeof value === 'string' ? hintFor(value, values) : undefined)
+      hintFor(value, values))
     return true
   }
 

@@ -201,7 +201,7 @@ describe('analyze()', () => {
     expect(analyzeWhere('shot.num IN (1, "x")')[0].hint).toBeUndefined()
     // reading a property off the player is the way to compare a value
     expect(analyzeWhere('shot.hitter.id = 3 AND me.name = "Anna" AND ' +
-      'shot.hitter.team IN (0, 1) AND shot.hitter = me.teammate')).toEqual([])
+      'shot.hitter.team = me.team AND shot.hitter = me.teammate')).toEqual([])
   })
 
   test('exists() on a bare shot/rally reference hints at .num', () => {
@@ -314,23 +314,30 @@ describe('analyze()', () => {
     expect(analyzeWhere('shot.type IN ("smash", "drive")')).toEqual([])
   })
 
-  test('team properties reject numbers that are not a team', () => {
-    // a player's id (0-3) is not a team: this counted zero wins in a real chat
+  test('a team never compares with a number', () => {
+    // team 0 is one side of one video: the number is a guess at who played
+    // there, and across games it is different people in each. A real chat
+    // counted sum(rally.winner = 3) with a player's id and reported zero
+    // wins, and literal 0s and 1s flipped between turns of another.
     expect(analyzeQuery('SELECT sum(rally.winner = 3) FROM "f" WHERE true')[0])
       .toEqual({
-        code: 'PBQL_UNKNOWN_ENUM_VALUE',
-        message: 'rally.winner is never 3 (valid: 0, 1)',
+        code: 'PBQL_TEAM_NUMBER',
+        message: 'compare rally.winner with a player\'s team, not the number 3',
+        hint: expect.stringContaining('rally.winner = player("Name").team'),
         line: 1,
         col: 25,
         length: 0
       })
-    expect(analyzeWhere('game.winner != 2')[0].message)
-      .toBe('game.winner is never 2 (valid: 0, 1)')
-    expect(analyzeWhere('shot.hitter.team IN (0, 2)')[0].message)
-      .toBe('shot.hitter.team is never 2 (valid: 0, 1)')
-    expect(analyzeWhere('rally.winner = 1 AND 0 = me.team')).toEqual([])
-    expect(analyzeWhere('rally.winner = me.team')).toEqual([])
-    // a string is the type check's business, not the enum's
+    // every form: either side, !=, ordering, IN, and a valid team number too
+    for (const where of ['game.winner != 1', '0 = me.team',
+      'rally.winner > 0', 'shot.hitter.team IN (0, 1)']) {
+      expect(analyzeWhere(where).map(e => e.code)).toEqual(['PBQL_TEAM_NUMBER'])
+    }
+    // named through a player, the team is right in every game
+    expect(analyzeWhere('rally.winner = me.team AND ' +
+      'rally.winner != shot.hitter.team AND ' +
+      'game.winner = player("Chris").team')).toEqual([])
+    // a string is the type check's business, not the team's
     expect(analyzeWhere('rally.winner = "us"').map(e => e.code))
       .toEqual(['PBQL_TYPE_MISMATCH'])
   })
@@ -340,7 +347,10 @@ describe('analyze()', () => {
     let checked = 0
     for (const [objName, { propList }] of Object.entries(REGISTRY)) {
       for (const { path, unit } of propList) {
-        for (const value of enumValuesOf(unit) ?? []) {
+        // a team's values are numbers, which it never compares with (above)
+        const values = (enumValuesOf(unit) ?? [])
+          .filter(value => typeof value === 'string')
+        for (const value of values) {
           expect(analyzeWhere(`${roots[objName]}.${path} = ${JSON.stringify(value)}`))
             .toEqual([])
           checked++

@@ -94,10 +94,13 @@ describe('runQuery: filtering', () => {
 
   test('relative shots and rallies; out-of-range is unknown', () => {
     expect(shotsWhere('shot[-1].type = "drop"')).toEqual([[0, 2]])
-    expect(shotsWhere('rally[1].winner = 1')).toEqual([[0, 0], [0, 1], [0, 2]])
-    // rally 1's previous rally was won by team 0; rally 2's by team 1
-    expect(shotsWhere('rally[-1].winner = 0')).toEqual([[1, 0], [1, 1]])
-    expect(shotsWhere('rally[-1].winner = 1')).toEqual([[2, 0], [2, 1], [2, 2], [2, 3]])
+    expect(shotsWhere('rally[1].winner = player("Carol").team'))
+      .toEqual([[0, 0], [0, 1], [0, 2]])
+    // rally 1's previous rally was won by Alice's team; rally 2's by Carol's
+    expect(shotsWhere('rally[-1].winner = player("Alice").team'))
+      .toEqual([[1, 0], [1, 1]])
+    expect(shotsWhere('rally[-1].winner = player("Carol").team'))
+      .toEqual([[2, 0], [2, 1], [2, 2], [2, 3]])
   })
 
   test('arithmetic, division by zero, min/max functions', () => {
@@ -1034,7 +1037,7 @@ describe('null and malformed data', () => {
   })
 
   test('a game outcome that is not a pair is unknown', () => {
-    expect(runOn('game.winner = 0',
+    expect(runOn('game.winner = me.team',
       damaged(i => { i.game_data.game_outcome = null })).shots).toEqual([])
     expect(runOn('exists(game.winner)',
       damaged(i => { i.game_data.game_outcome = 7 })).shots).toEqual([])
@@ -1132,8 +1135,8 @@ describe('null and malformed data', () => {
 
   test('a shot without a player_id has no hitter at all', () => {
     const game = damaged(i => { i.rallies[0].shots[0].player_id = null })
-    // "null" is not a player: it is neither on team 0 nor anyone's partner
-    expect(runOn('shot.hitter.team = 0', game).shots
+    // "null" is not a player: it is on no one's team and no one's partner
+    expect(runOn('shot.hitter.team = me.team', game).shots
       .map(s => [s.rallyIdx, s.shotIdx])).toEqual([[0, 2], [1, 1], [2, 0], [2, 2]])
     expect(runOn('exists(shot.hitter.teammate.id)', game).shots).toHaveLength(8)
     expect(runOn('shot.hitter = me', game).shots).toHaveLength(2)
@@ -1143,7 +1146,7 @@ describe('null and malformed data', () => {
   test('a null myPlayerIdx is untagged, warning and all', () => {
     const game = makeDoublesGame()
     game.meta = { ...game.meta, myPlayerIdx: null }
-    const result = runOn('me.team = 0', game)
+    const result = runOn('shot.hitter = me', game)
     expect(result.shots).toEqual([])
     expect(result.warnings).toEqual([
       expect.objectContaining({ code: 'PBQL_ME_NOT_TAGGED' })])

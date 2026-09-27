@@ -156,15 +156,13 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
   at the player to compare identities with = / != (shot.hitter = me,
   shot[1].hitter.name = "Joe"). taggedWith is a player/shot method
   (shot.hitter.taggedWith("Anna*")).
-- A team number belongs to one game: team 0 is whoever played one side of
-  THAT video, so it can be different people in each game, and a literal
-  0 or 1 in a query is only as right as your guess of who that is. Name
-  the team through a player instead: rally.winner = me.team for the
-  asker's team, rally.winner = shot.hitter.team for the team of the
-  shot's hitter (one player's win rate by shot type is
-  avg(rally.winner = shot.hitter.team) over their shots). Write a
-  literal team number only when the question itself names the team by
-  its number.
+- Never compare a team with a number (rally.winner = 0 is an error):
+  team 0 is whoever played one side of THAT video, so it can be
+  different people in each game. Name the team through a player:
+  rally.winner = me.team for the asker's team, rally.winner =
+  shot.hitter.team for the team of the shot's hitter (one player's win
+  rate by shot type is avg(rally.winner = shot.hitter.team) over their
+  shots), rally.winner = player("Chris").team for anyone by name.
 - Forehand/backhand questions: shot.strokeType needs the hitter's
   handedness, which only host-augmented insights carry — it is unknown
   otherwise. shot.strokeSide ("left"/"right" side of the body) always
