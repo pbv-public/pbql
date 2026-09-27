@@ -99,6 +99,30 @@ describe('toShotExplorerURLs', () => {
       ])
   })
 
+  test('a link calls each player by the name its page knows', () => {
+    const text = 'FROM "aaaaaaaaaaaa:1", "bbbbbbbbbbbb:1"\n' +
+      'WHERE shot.hitter.name IN ("Unknown 1", "Unknown 3") OR ' +
+      'shot.hitter = player("Unknown 3").teammate OR ' +
+      'shot.taggedWith("Unknown*")\n' +
+      'UNION ALL FROM "aaaaaaaaaaaa:1" WHERE shot.hitter.name = "Amy"'
+    const urls = toShotExplorerURLs(text, ['aaaaaaaaaaaa:1', 'bbbbbbbbbbbb:1'], {
+      playerNames: {
+        'aaaaaaaaaaaa:1': { 'Unknown 1': 'Player 2' },
+        'bbbbbbbbbbbb:1': { 'Unknown 3': 'Player 4' }
+      }
+    })
+    expect(bodies(urls)).toEqual([
+      // another game's Unknown stays as written, matching nobody here
+      'WHERE shot.hitter.name IN ("Player 2", "Unknown 3") OR ' +
+        'shot.hitter = player("Unknown 3").teammate OR ' +
+        'shot.taggedWith("Unknown*")\n' +
+        'UNION ALL\nWHERE shot.hitter.name = "Amy"',
+      'WHERE shot.hitter.name IN ("Unknown 1", "Player 4") OR ' +
+        'shot.hitter = player("Player 4").teammate OR ' +
+        'shot.taggedWith("Unknown*")'
+    ])
+  })
+
   test('a single-game UNION link keeps every branch', () => {
     const text = 'FROM "aaaaaaaaaaaa:1" WHERE shot.isVolley\n' +
       'UNION ALL FROM "aaaaaaaaaaaa:1" WHERE shot.num = 3 LIMIT 5'
