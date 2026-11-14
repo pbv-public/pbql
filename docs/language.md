@@ -431,7 +431,9 @@ error), and they exist only in `SELECT`, `HAVING`, and a grouped
 `ORDER BY` — never in `WHERE` or a `GROUP BY` key, which are evaluated one
 shot at a time.
 
-`count()` counts selected shots. PBQL's underlying rows are shots, so rally
+`count()` counts selected shots (`count(*)` is the same). It takes no other
+argument: to count the shots where a condition holds, use
+`sum(<condition>)`. PBQL's underlying rows are shots, so rally
 and game properties repeat on every selected shot. To calculate a result per
 rally, filter to one shot per rally, commonly with `shot.num = 1`.
 

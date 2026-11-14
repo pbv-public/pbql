@@ -195,6 +195,17 @@ describe('parse()', () => {
     expect(parseWhere('shot.TaggedWith("x")').path).toEqual(['TaggedWith'])
   })
 
+  test('count(*) is count()', () => {
+    for (const text of ['count(*)', 'COUNT( * )']) {
+      const { ast, errors } = parse(`SELECT ${text} FROM "f" WHERE true`)
+      expect(errors).toBeUndefined()
+      expect(stripLoc(ast.select[0].expr)).toEqual({ kind: 'call', name: 'count', args: [] })
+    }
+    // no other function takes a star
+    expect(parse('SELECT sum(*) FROM "f" WHERE true').errors[0].code)
+      .toBe('PBQL_PARSE_ERROR')
+  })
+
   test('single-quoted strings mean the same as double-quoted ones', () => {
     expect(parseWhere("shot.hitter.name = 'it''s \\ \"me\"'").rhs.value)
       .toBe('it\'s \\ "me"')

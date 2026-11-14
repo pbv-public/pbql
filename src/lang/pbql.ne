@@ -218,7 +218,12 @@ segName ->
   | %unit_secs  {% d => d[0].text %}
   | %unit_shots {% d => d[0].text %}
 callExpr -> %identifier callArgs
-  {% d => ({ kind: 'call', name: d[0].text, args: d[1], loc: loc(d[0]) }) %}
+    {% d => ({ kind: 'call', name: d[0].text, args: d[1], loc: loc(d[0]) }) %}
+  # count(*) is SQL's spelling of count(); no other function takes a star
+  | %identifier %leftParen %star %rightParen
+    {% (d, _, reject) => d[0].text.toLowerCase() === 'count'
+         ? { kind: 'call', name: d[0].text, args: [], loc: loc(d[0]) }
+         : reject %}
 callArgs ->
     %leftParen %rightParen          {% () => [] %}
   | %leftParen argList %rightParen  {% d => d[1] %}
