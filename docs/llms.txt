@@ -93,8 +93,8 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
   with avg(<condition>) * 100 — use that whenever the answer is asked
   for (or charted) as a percentage. Aggregates never nest
   (avg(count()) is an error) and never appear in WHERE or GROUP BY.
-- GROUP BY computes per-group breakdowns (win rate by shot type, avg
-  speed by player) in one query; with it, every SELECT/ORDER BY item
+- GROUP BY computes per-group breakdowns (average speed by shot type,
+  faults by player) in one query; with it, every SELECT/ORDER BY item
   must be built from aggregates and group keys, and CONTEXT is not
   allowed. HAVING (after GROUP BY) filters the grouped rows using
   aggregates and group keys, e.g. GROUP BY rally.num HAVING
@@ -110,15 +110,20 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
 - Computing rates ("how often do we win when …"): if the condition can
   hold at most once per rally (who served, a shot.num = 1 fact), one
   query is enough — avg(<condition>) is a rate (booleans average as
-  1/0), and GROUP BY gives per-group rates. But when the condition can
-  occur MULTIPLE times in one rally (e.g. "rallies where I hit a
-  drop"), a shot-level avg over-counts rallies with several matching
-  shots: instead SELECT rally.num, rally.winner with the condition,
-  dedupe the rallies yourself, and divide — or run two such queries
-  and divide the deduped rally counts. Keep WHERE to exactly the
-  rally-membership condition asked about; who won is read from the
-  projected rally.winner afterward, never folded into WHERE. Never
-  present a shot-weighted average as a per-point rate.
+  1/0), and GROUP BY gives per-group rates. When it can hold several
+  times in one rally ("rallies where I hit a drop"), a shot-level avg
+  counts a rally once per matching shot. Count each rally once
+  instead: anchor on its serve and test the rally with rally.count —
+  WHERE shot.num = 1 AND rally.count(shot.hitter = me AND shot.type =
+  "drop") > 0. Who won goes in the SELECT (avg(rally.winner =
+  me.team)), never in WHERE. Never present a shot-weighted average as
+  a per-point rate.
+- A rally win rate says as much about WHEN a shot is hit as about how
+  well: third-shot drops are hit by the serving team, which wins fewer
+  rallies whatever it hits, and smashes by a team already on top. So
+  the win rates of different shot types do not rank how good each
+  shot was. Compare shots hit in the same situation (the serving
+  team's third shots: drop against drive), or use quality and errors.
 - Use SELECT only when the question asks for values or aggregates
   (counts, averages, a spreadsheet of numbers). Questions that find or
   show shots — including superlatives like "the fastest shot" (use
@@ -167,9 +172,8 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
   team 0 is whoever played one side of THAT video, so it can be
   different people in each game. Name the team through a player:
   rally.winner = me.team for the asker's team, rally.winner =
-  shot.hitter.team for the team of the shot's hitter (one player's win
-  rate by shot type is avg(rally.winner = shot.hitter.team) over their
-  shots), rally.winner = player("Chris").team for anyone by name.
+  shot.hitter.team for the team of the shot's hitter (whichever side
+  they played), rally.winner = player("Chris").team for anyone by name.
 - Forehand/backhand questions: shot.strokeType needs the hitter's
   handedness, which only host-augmented insights carry — it is unknown
   otherwise. shot.strokeSide ("left"/"right" side of the body) always
@@ -503,24 +507,24 @@ Q: How often did my team win the rally when we served? (serving happens once per
     FROM "83gyqyc10y8f"
     WHERE shot.num = 1 AND shot.hitter.team = me.team
 
-Q: Rallies where I hit at least one drop, with each rally's winner — drops repeat within a rally, so dedupe these rows before computing a win rate
+Q: How often does my team win the rallies where I hit at least one drop? (drops repeat within a rally, so count each rally once: its serve, with rally.count)
 
-    SELECT rally.num, rally.winner
+    SELECT avg(rally.winner = me.team) * 100 AS "win %", count() AS "rallies"
     FROM "83gyqyc10y8f"
-    WHERE shot.hitter = me AND shot.type = "drop"
+    WHERE shot.num = 1 AND rally.count(shot.hitter = me AND shot.type = "drop") > 0
 
-Q: My win rate by shot type — how do rallies go when I hit each kind of shot?
+Q: For each kind of shot I hit, the share of those shots that came in rallies my team won (per shot: a rally with three of my dinks counts three times)
 
     SELECT shot.type, avg(rally.winner = me.team) AS "win rate", count()
     FROM "83gyqyc10y8f"
     WHERE shot.hitter = me
     GROUP BY shot.type
 
-Q: Joe's win rate by the shot type he hit (his team, whichever side he played)
+Q: When my team hits the third shot, do we win more rallies with a drop or a drive? (one third shot per rally, always the serving team's, so the two compare like with like)
 
-    SELECT shot.type, avg(rally.winner = shot.hitter.team) * 100 AS "win %", count()
+    SELECT shot.type, avg(rally.winner = me.team) * 100 AS "win %", count() AS "rallies"
     FROM "83gyqyc10y8f"
-    WHERE shot.hitter.name = "Joe"
+    WHERE shot.num = 3 AND shot.hitter.team = me.team AND shot.type IN ("drop", "drive")
     GROUP BY shot.type
 
 Q: How many rallies did Chris's team win? (one row per rally: its serve)

@@ -153,21 +153,21 @@ SELECT avg(rally.winner = me.team) AS "win rate when we serve"
 FROM "83gyqyc10y8f"
 WHERE shot.num = 1 AND shot.hitter.team = me.team
 
-# Q: Rallies where I hit at least one drop, with each rally's winner — drops repeat within a rally, so dedupe these rows before computing a win rate
-SELECT rally.num, rally.winner
+# Q: How often does my team win the rallies where I hit at least one drop? (drops repeat within a rally, so count each rally once: its serve, with rally.count)
+SELECT avg(rally.winner = me.team) * 100 AS "win %", count() AS "rallies"
 FROM "83gyqyc10y8f"
-WHERE shot.hitter = me AND shot.type = "drop"
+WHERE shot.num = 1 AND rally.count(shot.hitter = me AND shot.type = "drop") > 0
 
-# Q: My win rate by shot type — how do rallies go when I hit each kind of shot?
+# Q: For each kind of shot I hit, the share of those shots that came in rallies my team won (per shot: a rally with three of my dinks counts three times)
 SELECT shot.type, avg(rally.winner = me.team) AS "win rate", count()
 FROM "83gyqyc10y8f"
 WHERE shot.hitter = me
 GROUP BY shot.type
 
-# Q: Joe's win rate by the shot type he hit (his team, whichever side he played)
-SELECT shot.type, avg(rally.winner = shot.hitter.team) * 100 AS "win %", count()
+# Q: When my team hits the third shot, do we win more rallies with a drop or a drive? (one third shot per rally, always the serving team's, so the two compare like with like)
+SELECT shot.type, avg(rally.winner = me.team) * 100 AS "win %", count() AS "rallies"
 FROM "83gyqyc10y8f"
-WHERE shot.hitter.name = "Joe"
+WHERE shot.num = 3 AND shot.hitter.team = me.team AND shot.type IN ("drop", "drive")
 GROUP BY shot.type
 
 # Q: How many rallies did Chris's team win? (one row per rally: its serve)
