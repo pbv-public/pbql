@@ -32,6 +32,15 @@ WHERE shot.num = 3
 FROM "83gyqyc10y8f"
 WHERE shot.num = 1 AND shot.to.zone = "deep"
 
+# Q: What share of Chris's serves landed deep? (out of his serves, not all his shots)
+SELECT avg(shot.to.zone = "deep") * 100 AS "deep %", count() AS "serves"
+FROM "83gyqyc10y8f"
+WHERE shot.num = 1 AND shot.hitter = player("Chris")
+
+# Q: Show rally 12's fifth shot and rally 30's eighth (pair each rally with its own shot, AND binding tighter than OR: two IN lists would match every combination)
+FROM "83gyqyc10y8f"
+WHERE rally.num = 12 AND shot.num = 5 OR rally.num = 30 AND shot.num = 8
+
 # Q: Shots faster than 40 mph with a bit of lead-in video
 FROM "83gyqyc10y8f"
 WHERE shot.speed > 40
@@ -183,6 +192,12 @@ FROM "83gyqyc10y8f", "jhc3t8h8b5cj"
 WHERE true
 GROUP BY game.vid, game.sessionNum, game.name
 ORDER BY min(game.epoch)
+
+# Q: How many of our opponents' shots went to each of us? (the player a shot went to is the one who hit the next shot)
+SELECT shot[1].hitter.name AS "player", count() AS "shots"
+FROM "83gyqyc10y8f"
+WHERE shot.hitter.team != me.team AND shot[1].hitter.team = me.team
+GROUP BY shot[1].hitter.name
 
 # Q: How many rallies did Chris's team win? (one row per rally: its serve)
 SELECT count() AS "rallies won"
