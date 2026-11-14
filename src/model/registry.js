@@ -682,7 +682,8 @@ const RATING_PROPS = RATING_AREAS.map(({ path, key, area }) => ({
   type: 'number',
   unit: 'DUPR',
   doc: `the player's ${area} rating for THIS game (not their career ` +
-    'rating); one value per game, so it repeats on every shot of it and ' +
+    'rating), on the 2-8 DUPR-like scale the app shows; one value per ' +
+    'game, so it repeats on every shot of it and ' +
     'is unknown for a player the game did not rate',
   extract: (ctx, playerIdx) => ctx.game.playerRating(playerIdx, key)
 }))

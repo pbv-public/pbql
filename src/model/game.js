@@ -173,12 +173,15 @@ export class Game {
   // Unknown for a slot the game does not have, for a player the engine did
   // not rate, and for insights carrying no trends at all — never coerced,
   // since an unrated game must not read as a rating of zero.
+  // The insights file stores a rating on a 0-1 scale; the app shows it on
+  // the 2-8 DUPR-like scale (2 + 6r), which is the scale the rating
+  // columns promise (unit DUPR), so a query and the app agree.
   playerRating (playerIdx, key) {
     if (!this.playerExists(playerIdx)) {
       return undefined
     }
     const rating = this.insights.player_data?.[playerIdx]?.trends?.ratings?.[key]
-    return Number.isFinite(rating) ? rating : undefined
+    return Number.isFinite(rating) ? 2 + 6 * rating : undefined
   }
 
   // The host's "me" slot, when it names a player at all: anything else (no

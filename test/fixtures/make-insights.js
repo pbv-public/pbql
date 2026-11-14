@@ -56,9 +56,10 @@ export function makeDoublesInsights () {
       // right, p1 left, p2 untagged, p3 "both" (unusable for strokeType).
       // positional_performance is team-level: teammates share the value and
       // team 1's is the complement of team 0's.
-      // trends.ratings is the single-game rating: p0 rated on every area,
-      // p1 on one only, p2 rated nothing at all, p3 carries no trends -- so
-      // every way a rating can go unknown is represented.
+      // trends.ratings is the single-game rating, on the file's 0-1 scale
+      // (pbql reports 2 + 6r): p0 rated on every area, p1 on one only, p2
+      // rated nothing at all, p3 carries no trends -- so every way a rating
+      // can go unknown is represented.
       {
         team: 0,
         name: 'Player 1',
@@ -67,13 +68,13 @@ export function makeDoublesInsights () {
         positional_performance: { forward_pressure: 0.6, finishing_ability: 0.4 },
         trends: {
           ratings: {
-            overall: 3.75,
-            kitchen_game: 3.5,
-            ball_control: 3.25,
-            defense: 3,
-            offense: 4,
-            court_iq: 3.6,
-            targeting: 3.9
+            overall: 0.25,
+            kitchen_game: 0.125,
+            ball_control: 0.375,
+            defense: 0.5,
+            offense: 0.625,
+            court_iq: 0.1875,
+            targeting: 0.3125
           }
         }
       },
@@ -83,7 +84,7 @@ export function makeDoublesInsights () {
         avatar_id: 1,
         handedness: 'left',
         positional_performance: { forward_pressure: 0.6, finishing_ability: 0.4 },
-        trends: { ratings: { overall: 2.5 } }
+        trends: { ratings: { overall: 0.0625 } }
       },
       {
         team: 1,

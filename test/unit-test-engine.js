@@ -537,7 +537,7 @@ describe('runQuery: SELECT', () => {
     expect(result.columns).toEqual(['offense', 'defense', 'court IQ'])
     // a rating repeats on every shot of the game, so its average IS the
     // rating -- which is what makes this a one-line query
-    expect(result.rows).toEqual([[4, 3, 3.6]])
+    expect(result.rows).toEqual([[5.75, 5, 3.125]])
   })
 
   test('an unrated area averages to unknown, never to zero', () => {

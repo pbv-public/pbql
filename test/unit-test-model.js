@@ -204,14 +204,15 @@ describe('registry', () => {
 
   test('per-game ratings come from trends, and never read as zero', () => {
     const props = REGISTRY.player.props
-    // p0 is rated on every area
-    expect(props.get('rating.overall').extract(farShotCtx, 0)).toBe(3.75)
-    expect(props.get('rating.kitchenGame').extract(farShotCtx, 0)).toBe(3.5)
-    expect(props.get('rating.ballControl').extract(farShotCtx, 0)).toBe(3.25)
-    expect(props.get('rating.defense').extract(farShotCtx, 0)).toBe(3)
-    expect(props.get('rating.offense').extract(farShotCtx, 0)).toBe(4)
-    expect(props.get('rating.courtIQ').extract(farShotCtx, 0)).toBe(3.6)
-    expect(props.get('rating.targeting').extract(farShotCtx, 0)).toBe(3.9)
+    // p0 is rated on every area, each read on the app's 2-8 scale: the
+    // file's 0.25 is 2 + 6 * 0.25 = 3.5
+    expect(props.get('rating.overall').extract(farShotCtx, 0)).toBe(3.5)
+    expect(props.get('rating.kitchenGame').extract(farShotCtx, 0)).toBe(2.75)
+    expect(props.get('rating.ballControl').extract(farShotCtx, 0)).toBe(4.25)
+    expect(props.get('rating.defense').extract(farShotCtx, 0)).toBe(5)
+    expect(props.get('rating.offense').extract(farShotCtx, 0)).toBe(5.75)
+    expect(props.get('rating.courtIQ').extract(farShotCtx, 0)).toBe(3.125)
+    expect(props.get('rating.targeting').extract(farShotCtx, 0)).toBe(3.875)
 
     // only the current areas are columns: the ones they replaced are gone
     // rather than reading unknown on every game rated since
@@ -221,14 +222,14 @@ describe('registry', () => {
 
     // An unrated area is UNKNOWN, not 0: charting a missing rating as zero
     // would tell a player their defense collapsed when it was never scored.
-    expect(props.get('rating.overall').extract(farShotCtx, 1)).toBe(2.5)
+    expect(props.get('rating.overall').extract(farShotCtx, 1)).toBe(2.375)
     expect(props.get('rating.defense').extract(farShotCtx, 1)).toBeUndefined()
     expect(props.get('rating.overall').extract(farShotCtx, 2)).toBeUndefined()
     expect(props.get('rating.overall').extract(farShotCtx, 3)).toBeUndefined()
 
     // a rating is one value per game, so it reads the same on every shot
     const smashCtx = { ...farShotCtx, shot: game.rallies[0].shots[2], shotIdx: 2 }
-    expect(props.get('rating.overall').extract(smashCtx, 0)).toBe(3.75)
+    expect(props.get('rating.overall').extract(smashCtx, 0)).toBe(3.5)
 
     // the slots singles does not have are unknown, never a phantom rating
     const singles = new Game(makeSinglesGame())
