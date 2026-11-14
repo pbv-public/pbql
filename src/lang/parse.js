@@ -1,6 +1,7 @@
 import nearley from 'nearley'
 
 import grammar from './grammar-generated.js'
+import lexer from './lexer.js'
 
 function locOfEnd (text) {
   const lines = text.split('\n')
@@ -26,6 +27,25 @@ function missingWhere (text, offset) {
   } catch {
     return false
   }
+}
+
+// The last token before `offset`, comments and whitespace skipped: text
+// the parser already lexed without error on its way to `offset`.
+function tokenBefore (text, offset) {
+  lexer.reset(text.slice(0, offset))
+  let last
+  for (let token = lexer.next(); token; token = lexer.next()) {
+    last = token
+  }
+  return last
+}
+
+// `player.name`: a player root with no name, which a query reaches for to
+// go over every player and the grammar reports only as `unexpected "."`
+const PLAYER_NEEDS_NAME = {
+  code: 'PBQL_PLAYER_NEEDS_NAME',
+  message: 'player needs a name, as in player("Ray").team; to go over ' +
+    'every player, use shot.hitter (GROUP BY shot.hitter.name)'
 }
 
 const MISSING_WHERE = {
@@ -56,6 +76,10 @@ export function parse (text) {
     const at = { line: token.line, col: token.col, length: token.text.length }
     if (!isLexError && missingWhere(text, token.offset)) {
       return { errors: [{ ...MISSING_WHERE, ...at }] }
+    }
+    if (token.text === '.' &&
+      tokenBefore(text, token.offset)?.type === 'kw_player') {
+      return { errors: [{ ...PLAYER_NEEDS_NAME, ...at }] }
     }
     return {
       errors: [{

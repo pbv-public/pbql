@@ -266,6 +266,23 @@ describe('parse()', () => {
     expect(parse('FROM "g" WHERE )').errors[0].code).toBe('PBQL_PARSE_ERROR')
   })
 
+  test('says player needs a name instead of an unexpected "."', () => {
+    expect(parse('SELECT player.name, count() FROM "g" WHERE true ' +
+      'GROUP BY player.name').errors).toEqual([{
+      code: 'PBQL_PLAYER_NEEDS_NAME',
+      message: 'player needs a name, as in player("Ray").team; to go ' +
+        'over every player, use shot.hitter (GROUP BY shot.hitter.name)',
+      line: 1,
+      col: 14,
+      length: 1
+    }])
+    // any other stray "." is still just unexpected
+    expect(parse('FROM "g" WHERE shot..num = 1').errors[0])
+      .toMatchObject({ code: 'PBQL_PARSE_ERROR', message: 'unexpected "."' })
+    expect(parse('FROM "g" WHERE . = 1').errors[0].code)
+      .toBe('PBQL_PARSE_ERROR')
+  })
+
   test('rejects calling an object or a non-min/max duration function', () => {
     expect(parse('FROM "f" WHERE shot("x")').errors[0].code)
       .toBe('PBQL_UNEXPECTED_END')
