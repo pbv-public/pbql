@@ -182,6 +182,19 @@ describe('parse()', () => {
       .toBe('say "hi" \\')
   })
 
+  test('function names take their canonical spelling, whatever the case', () => {
+    const { ast, errors } = parse('SELECT SUM(shot.speed), Count(), ' +
+      'AVG(TOMS(shot.hitTime)) FROM "f" WHERE EXISTS(shot.type)')
+    expect(errors).toBeUndefined()
+    expect(ast.select.map(({ expr }) => expr.name)).toEqual(['sum', 'count', 'avg'])
+    expect(ast.select[2].expr.args[0].name).toBe('toMs')
+    expect(ast.where.name).toBe('exists')
+    // a name the language lacks stays as written, for the analyzer to report
+    expect(parseWhere('FOO(shot.speed)').name).toBe('FOO')
+    // methods are not functions: their names stay case-sensitive
+    expect(parseWhere('shot.TaggedWith("x")').path).toEqual(['TaggedWith'])
+  })
+
   test('single-quoted strings mean the same as double-quoted ones', () => {
     expect(parseWhere("shot.hitter.name = 'it''s \\ \"me\"'").rhs.value)
       .toBe('it\'s \\ "me"')

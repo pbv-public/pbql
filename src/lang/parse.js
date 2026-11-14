@@ -1,5 +1,6 @@
 import nearley from 'nearley'
 
+import { canonicalFunctionName } from './functions.js'
 import grammar from './grammar-generated.js'
 import lexer from './lexer.js'
 
@@ -52,6 +53,22 @@ const MISSING_WHERE = {
   code: 'PBQL_MISSING_WHERE',
   message: 'every query needs a WHERE clause after FROM; when no filter ' +
     'is wanted, write WHERE true'
+}
+
+// Function names are case-insensitive: every call takes its canonical
+// spelling here, so the analyzer, the engine and the printer see one name.
+function canonicalizeCalls (node) {
+  if (Array.isArray(node)) {
+    node.forEach(canonicalizeCalls)
+    return
+  }
+  if (node === null || typeof node !== 'object') {
+    return
+  }
+  if (node.kind === 'call') {
+    node.name = canonicalFunctionName(node.name)
+  }
+  Object.values(node).forEach(canonicalizeCalls)
 }
 
 /**
@@ -118,5 +135,6 @@ export function parse (text) {
       }]
     }
   }
+  canonicalizeCalls(results[0])
   return { ast: results[0] }
 }

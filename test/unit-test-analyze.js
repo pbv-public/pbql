@@ -1,5 +1,6 @@
-import { analyze, enumValuesOf } from '../src/analyze/analyze.js'
+import { AGGREGATE_FNS, analyze, enumValuesOf, SCALAR_FNS } from '../src/analyze/analyze.js'
 import { parse, validate } from '../src/index.js'
+import { FUNCTION_NAMES } from '../src/lang/functions.js'
 import { REGISTRY } from '../src/model/registry.js'
 
 function analyzeQuery (text) {
@@ -579,6 +580,18 @@ describe('analyze()', () => {
       .toBe('did you mean "speed"?')
     expect(analyzeQuery('FROM "f" WHERE true ORDER BY shot.spd')[0].code)
       .toBe('PBQL_UNKNOWN_PROPERTY')
+  })
+})
+
+describe('function names', () => {
+  test('the parser knows every function the analyzer gives an arity', () => {
+    expect([...new Set([...SCALAR_FNS.keys(), ...AGGREGATE_FNS.keys()])].sort())
+      .toEqual([...FUNCTION_NAMES].sort())
+  })
+
+  test('an upper-case aggregate validates like its canonical spelling', () => {
+    expect(validate('SELECT SUM(shot.speed) AS "s" FROM "f" WHERE true').errors)
+      .toEqual([])
   })
 })
 

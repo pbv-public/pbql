@@ -69,8 +69,11 @@ or give each condition its own aggregate column.
   form is UPPERCASE for clause keywords and lowercase for everything else.
   Multi-word keywords (`CONTEXT BEFORE`, `CONTEXT AFTER`, `GROUP BY`,
   `ORDER BY`) allow any whitespace between the words.
-- **Identifiers** (property names, function names) are case-sensitive:
-  `shot.isVolley`, not `shot.isvolley`.
+- **Function names** are case-insensitive, as in SQL (`SUM(x)` ≡ `sum(x)`,
+  `TOMS(x)` ≡ `toMs(x)`); the canonical form is the spelling in §5.5 and
+  §6.6.
+- **Property and method names** are case-sensitive: `shot.isVolley`, not
+  `shot.isvolley`.
 - **Numbers**: integer (`42`) and decimal (`3.5`) literals, always
   non-negative at the token level; negation is the unary `-` operator.
 - **Strings**: double-quoted, where `\"` and `\\` are the only escapes, or
