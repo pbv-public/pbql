@@ -348,6 +348,10 @@ video/session it is showing; the [CLI](cli.md) accepts video ids, local
 files, directories, and globs). PBQL only requires that each source
 resolve to whole games of insights data.
 
+Every query has a `FROM`, `SELECT` or not: rows are the games' shots, so
+there is no `SELECT` of values written into the query (SQL's
+`SELECT 1 UNION ALL SELECT 2`), and one is reported as `PBQL_MISSING_FROM`.
+
 ### 6.2 WHERE
 
 Any boolean-valued expression per §3–§5. Required (use `WHERE true` for

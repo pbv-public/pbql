@@ -208,6 +208,33 @@ describe('parse()', () => {
       .toEqual({ kind: 'not', arg: { kind: 'not', arg: exists } })
   })
 
+  test('a SELECT without FROM says so, rather than naming what came next', () => {
+    const cases = [
+      // values written into the query, the SQL way of making a table
+      ['SELECT "Ray" AS "Player", 70 AS "Deep %" UNION ALL SELECT "Ann", 30',
+        'UNION'],
+      ['SELECT 1', null],
+      ['SELECT count() WHERE true', 'WHERE'],
+      // the branch that lacks it, wherever it is
+      ['SELECT count() FROM "f" WHERE true UNION SELECT 1', null]
+    ]
+    for (const [text, at] of cases) {
+      const { errors } = parse(text)
+      expect(errors).toEqual([expect.objectContaining({
+        code: 'PBQL_MISSING_FROM',
+        col: at === null ? text.length + 1 : text.indexOf(at) + 1
+      })])
+    }
+    // a SELECT that has its FROM, or fails before reaching where one goes,
+    // fails for whatever else is wrong
+    expect(parse('SELECT shot.speed FROM "f" WHERE shot.speed >').errors[0].code)
+      .toBe('PBQL_UNEXPECTED_END')
+    expect(parse('SELECT count(').errors[0].code).toBe('PBQL_UNEXPECTED_END')
+    expect(parse('SELECT abs(*) WHERE true').errors[0].code).toBe('PBQL_PARSE_ERROR')
+    expect(parse('FROM "f" WHERE shot.speed >').errors[0].code)
+      .toBe('PBQL_UNEXPECTED_END')
+  })
+
   test('comparing with NULL says how to test for a missing value', () => {
     for (const where of ['shot.type = NULL', 'shot.type != null']) {
       const text = `FROM "f" WHERE ${where}`

@@ -30,15 +30,34 @@ function missingWhere (text, offset) {
   }
 }
 
-// The last token before `offset`, comments and whitespace skipped: text
-// the parser already lexed without error on its way to `offset`.
-function tokenBefore (text, offset) {
+// The tokens before `offset`, comments and whitespace skipped: text the
+// parser already lexed without error on its way to `offset`.
+function tokensBefore (text, offset) {
   lexer.reset(text.slice(0, offset))
-  let last
+  const tokens = []
   for (let token = lexer.next(); token; token = lexer.next()) {
-    last = token
+    tokens.push(token)
   }
-  return last
+  return tokens
+}
+
+// A SELECT with no FROM where parsing stopped: values written into the
+// query (SELECT "Ray" AS "Player", 70 AS "Deep %" UNION ALL SELECT ...),
+// which SQL allows and PBQL cannot, since its rows are the games' shots.
+// The grammar only sees the UNION or the end that came where FROM
+// belonged. It was missing when the SELECT so far has none and a FROM
+// (and a WHERE) right there would complete it.
+function missingFrom (text, offset) {
+  const tokens = tokensBefore(text, offset)
+  const select = tokens.findLastIndex(token => token.type === 'kw_select')
+  if (select === -1 || tokens.slice(select).some(t => t.type === 'kw_from')) {
+    return false
+  }
+  try {
+    return feed(`${text.slice(0, offset)} FROM "x" WHERE true`).length > 0
+  } catch {
+    return false
+  }
 }
 
 // `player.name`: a player root with no name, which a query reaches for to
@@ -55,6 +74,12 @@ const NULL_VALUE = {
   code: 'PBQL_NULL_VALUE',
   message: 'NULL is not a value: to test for a missing value write ' +
     'x IS NULL, and for a present one x IS NOT NULL'
+}
+
+const MISSING_FROM = {
+  code: 'PBQL_MISSING_FROM',
+  message: 'every SELECT needs a FROM: PBQL selects from the games\' ' +
+    'shots, never from values written into the query'
 }
 
 const MISSING_WHERE = {
@@ -106,8 +131,11 @@ export function parse (text) {
       return { errors: [{ ...NULL_VALUE, ...at }] }
     }
     if (token.text === '.' &&
-      tokenBefore(text, token.offset)?.type === 'kw_player') {
+      tokensBefore(text, token.offset).at(-1)?.type === 'kw_player') {
       return { errors: [{ ...PLAYER_NEEDS_NAME, ...at }] }
+    }
+    if (!isLexError && missingFrom(text, token.offset)) {
+      return { errors: [{ ...MISSING_FROM, ...at }] }
     }
     return {
       errors: [{
@@ -124,6 +152,9 @@ export function parse (text) {
     const at = { line, col, length: 0 }
     if (missingWhere(text, text.length)) {
       return { errors: [{ ...MISSING_WHERE, ...at }] }
+    }
+    if (missingFrom(text, text.length)) {
+      return { errors: [{ ...MISSING_FROM, ...at }] }
     }
     return {
       errors: [{
