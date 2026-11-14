@@ -99,6 +99,8 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
   allowed. HAVING (after GROUP BY) filters the grouped rows using
   aggregates and group keys, e.g. GROUP BY rally.num HAVING
   count() >= 4.
+- ORDER BY can name a SELECT column by its label (ORDER BY "win %"
+  DESC) or its position (ORDER BY 2) instead of repeating it.
 - WHERE is required in every query — there is no bare FROM … GROUP BY.
   When no filter is wanted (count everything, a whole-game breakdown),
   write WHERE true.
