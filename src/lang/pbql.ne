@@ -251,7 +251,10 @@ groupList ->
   | groupList %comma expr {% d => [...d[0], d[2]] %}
 
 # ---- ORDER BY / LIMIT ------------------------------------------------------
-orderBy -> %orderBy orderList {% d => d[1] %}
+# a literal item (ORDER BY "win %", ORDER BY 2) has no position of its own,
+# so it takes the clause's, for errors about it to point at
+orderBy -> %orderBy orderList
+  {% d => d[1].map(item => item.expr.loc ? item : { ...item, loc: loc(d[0]) }) %}
 orderList ->
     orderItem                    {% d => [d[0]] %}
   | orderList %comma orderItem   {% d => [...d[0], d[2]] %}

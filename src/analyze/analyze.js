@@ -53,6 +53,31 @@ export function containsAggregate (node) {
   return isAggregateCall(node) || containsAggregate(Object.values(node))
 }
 
+/**
+ * What an ORDER BY item sorts by. As in SQL, a quoted string names a
+ * SELECT column by its label (ORDER BY "win %") and a whole number names
+ * one by position (ORDER BY 2); any other item sorts by itself. The
+ * analyzer and the engine share this, so they agree on what is sorted.
+ *
+ * @param {Object} query one (non-union) query
+ * @param {{expr: Object}} item an ORDER BY item
+ * @returns {Object|undefined} the expression to sort by, or undefined for
+ *   a constant that names no SELECT column (which would sort nothing)
+ */
+export function orderByExpr (query, { expr }) {
+  if (expr.kind !== 'lit') {
+    return expr
+  }
+  const select = Array.isArray(query.select) ? query.select : []
+  if (typeof expr.value === 'string') {
+    return select.find(({ label }) => label === expr.value)?.expr
+  }
+  const position = expr.value
+  return Number.isInteger(position) && position >= 1 && position <= select.length
+    ? select[position - 1].expr
+    : undefined
+}
+
 // The first per-shot reference (a property or a method call) OUTSIDE every
 // aggregate of the expression, or undefined. An aggregate's own argument is
 // per-shot by design, so it is skipped.
@@ -521,6 +546,30 @@ export function analyze (query) {
     }
   }
 
+  // ORDER BY "label" / ORDER BY 2 sorts by that SELECT column, whose
+  // expression the SELECT checks already covered. Any other constant would
+  // sort nothing, which is never what was meant: models write
+  // ORDER BY "win %" expecting SQL's label reference and then read the
+  // first row as the top one.
+  function checkOrderByColumn (item) {
+    const printed = printExpr(item.expr)
+    const resolved = orderByExpr(query, item)
+    if (resolved === undefined) {
+      const labels = (Array.isArray(query.select) ? query.select : [])
+        .filter(({ label }) => label !== null)
+        .map(({ label }) => JSON.stringify(label))
+      err(item, 'PBQL_ORDER_BY_CONSTANT',
+        `ORDER BY ${printed} names no SELECT column, so it would sort ` +
+        'nothing: order by an expression, a SELECT label' +
+        (labels.length ? ` (${labels.join(', ')})` : '') +
+        ', or a SELECT column number')
+    } else if (!grouped && containsAggregate(resolved)) {
+      err(item, 'PBQL_ORDER_BY_AGGREGATE',
+        `ORDER BY ${printed} sorts by an aggregate, which needs GROUP BY: ` +
+        'without it the SELECT is a single row')
+    }
+  }
+
   // An aggregating SELECT without GROUP BY collapses every shot into ONE
   // row, so a per-shot reference beside (or inside) the aggregates has no
   // single value to report — the ungrouped counterpart of checkGrouping.
@@ -555,7 +604,11 @@ export function analyze (query) {
     checkExpr(key, false) // keys are per-shot values; aggregates can't nest
   }
   for (const item of query.orderBy ?? []) {
-    checkExpr(item.expr, grouped) // grouped rows may order by aggregates
+    if (item.expr.kind === 'lit') {
+      checkOrderByColumn(item)
+    } else {
+      checkExpr(item.expr, grouped) // grouped rows may order by aggregates
+    }
   }
   if (query.having) {
     checkExpr(query.having, true) // aggregates anywhere in the condition

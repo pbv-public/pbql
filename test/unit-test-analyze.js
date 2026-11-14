@@ -141,6 +141,34 @@ describe('analyze()', () => {
       .toBe('PBQL_SELECT_CONTEXT')
   })
 
+  test('ORDER BY a literal names a SELECT column or is an error', () => {
+    const analyzeText = text => analyze(parse(text).ast).errors
+    const grouped = 'SELECT shot.type, count() AS "n" FROM "x" ' +
+      'WHERE true GROUP BY shot.type ORDER BY '
+    // a label or a 1-based position, as in SQL
+    expect(analyzeText(grouped + '"n" DESC')).toEqual([])
+    expect(analyzeText(grouped + '2')).toEqual([])
+    expect(analyzeText('SELECT shot.speed AS "mph" FROM "x" WHERE true ' +
+      'ORDER BY "mph"')).toEqual([])
+    // anything else would sort nothing
+    expect(analyzeText(grouped + '"win %"')).toEqual([expect.objectContaining({
+      code: 'PBQL_ORDER_BY_CONSTANT',
+      message: 'ORDER BY "win %" names no SELECT column, so it would sort ' +
+        'nothing: order by an expression, a SELECT label ("n"), or a ' +
+        'SELECT column number',
+      line: 1, // at the ORDER BY keyword: a literal has no position
+      col: 73
+    })])
+    expect(analyzeText(grouped + '3')[0].code).toBe('PBQL_ORDER_BY_CONSTANT')
+    expect(analyzeText('FROM "x" WHERE true ORDER BY true')[0].message)
+      .toBe('ORDER BY true names no SELECT column, so it would sort ' +
+        'nothing: order by an expression, a SELECT label, or a SELECT ' +
+        'column number')
+    // an aggregate column is a single row without GROUP BY
+    expect(analyzeText('SELECT count() AS "n" FROM "x" WHERE true ' +
+      'ORDER BY "n"')[0].code).toBe('PBQL_ORDER_BY_AGGREGATE')
+  })
+
   test('HAVING needs GROUP BY and groups its references', () => {
     const analyzeText = text => analyze(parse(text).ast).errors
     expect(analyzeText('SELECT rally.num, count() FROM "x" ' +

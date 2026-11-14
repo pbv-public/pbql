@@ -2,7 +2,7 @@
 // to search (the host resolves FROM sources to insights JSON — the CLI via
 // src/sources/resolve.js); the engine analyzes, filters, orders,
 // limits, computes context windows, and projects SELECT.
-import { analyze, containsAggregate, isAggregateCall } from '../analyze/analyze.js'
+import { analyze, containsAggregate, isAggregateCall, orderByExpr } from '../analyze/analyze.js'
 import { parse } from '../lang/parse.js'
 import { printExpr } from '../lang/print.js'
 import { Game, InvalidInsightsError, UnsupportedInsightsError } from '../model/game.js'
@@ -204,8 +204,8 @@ function projectGrouped (query, selected) {
       evalOverShots(query.having, group.members) === true)
   }
   rows = query.orderBy
-    ? sortByKeys(rows, query.orderBy, group => query.orderBy.map(({ expr }) => {
-      const value = valueOf(expr, group)
+    ? sortByKeys(rows, query.orderBy, group => query.orderBy.map(item => {
+      const value = valueOf(orderByExpr(query, item), group)
       return value === null ? UNKNOWN : value // nulls sort last either way
     }))
     : rows.sort((a, b) => compareKeyTuples(a.keyValues, b.keyValues))
@@ -444,7 +444,7 @@ function runBranch (query, wrapped, warnings) {
   if (!query.groupBy) {
     if (query.orderBy) {
       selected = sortByKeys(selected, query.orderBy, ctx =>
-        query.orderBy.map(({ expr }) => evalExpr(expr, ctx)))
+        query.orderBy.map(item => evalExpr(orderByExpr(query, item), ctx)))
     }
     if (query.limit !== null) {
       selected = selected.slice(0, query.limit)

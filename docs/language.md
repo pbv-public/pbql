@@ -379,6 +379,12 @@ last regardless of direction. Without `ORDER BY`, results keep video order
 (by game, rally, shot). With `GROUP BY`, `ORDER BY` sorts the grouped rows
 instead.
 
+As in SQL, an item may name a `SELECT` column instead of repeating its
+expression: by its label (`ORDER BY "win %" DESC`) or by its 1-based
+position (`ORDER BY 2`). Any other constant would sort nothing, so it is an
+error (`PBQL_ORDER_BY_CONSTANT`), as is naming an aggregate column without
+`GROUP BY` (`PBQL_ORDER_BY_AGGREGATE`), where the `SELECT` is one row.
+
 ### 6.5 LIMIT
 
 `LIMIT n` keeps the first n rows after ordering, across all games (with

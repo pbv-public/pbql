@@ -496,6 +496,20 @@ describe('coverage edges', () => {
       .toEqual([[1, 3], [3, 4]])
   })
 
+  test('ORDER BY a SELECT label or column number sorts by that column', () => {
+    const run = text => runQuery({ text, games: [makeDoublesGame()] })
+    const grouped = 'SELECT rally.num, count() AS "shots" FROM "x" ' +
+      'WHERE shot.num >= 1 GROUP BY rally.num ORDER BY '
+    expect(run(grouped + '"shots" DESC').rows)
+      .toEqual([[3, 4], [1, 3], [2, 2]])
+    expect(run(grouped + '2 DESC LIMIT 1').rows).toEqual([[3, 4]])
+    // a per-shot label sorts the shots themselves
+    const fastest = run('SELECT shot.speed AS "mph" FROM "x" WHERE true ' +
+      'ORDER BY "mph" DESC LIMIT 2')
+    expect(fastest.rows).toEqual(run('SELECT shot.speed AS "mph" FROM "x" ' +
+      'WHERE true ORDER BY shot.speed DESC LIMIT 2').rows)
+  })
+
   test('game-object properties evaluate in queries', () => {
     expect(shotsWhere('game.numRallies = 3')).toHaveLength(9)
     expect(shotsWhere('game.winner = me.team')).toHaveLength(9)
