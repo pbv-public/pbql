@@ -170,6 +170,20 @@ FROM "83gyqyc10y8f"
 WHERE shot.num = 3 AND shot.hitter.team = me.team AND shot.type IN ("drop", "drive")
 GROUP BY shot.type
 
+# Q: Each player's overall rating in this game, highest first (one value per game that repeats on every shot, so avg() reads it)
+SELECT shot.hitter.name AS "player", avg(shot.hitter.rating.overall) AS "rating"
+FROM "83gyqyc10y8f"
+WHERE true
+GROUP BY shot.hitter.name
+ORDER BY "rating" DESC
+
+# Q: My overall rating in each of these games, oldest first
+SELECT game.name AS "game", avg(me.rating.overall) AS "rating"
+FROM "83gyqyc10y8f", "jhc3t8h8b5cj"
+WHERE true
+GROUP BY game.vid, game.sessionNum, game.name
+ORDER BY min(game.epoch)
+
 # Q: How many rallies did Chris's team win? (one row per rally: its serve)
 SELECT count() AS "rallies won"
 FROM "83gyqyc10y8f"
