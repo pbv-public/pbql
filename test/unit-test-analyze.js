@@ -623,6 +623,31 @@ describe('CASE', () => {
   })
 })
 
+describe('count(x)', () => {
+  const countOf = arg => analyzeQuery(`SELECT count(${arg}) FROM "f" WHERE true`)
+
+  test('says to sum a condition rather than guess what count(x) meant', () => {
+    for (const arg of ['shot.hasFault', 'shot.speed > 40', 'exists(shot.type)',
+      'NOT shot.isVolley', 'shot.type IN ("drop")']) {
+      expect(countOf(arg)).toEqual([expect.objectContaining({
+        code: 'PBQL_COUNT_ARGUMENT',
+        message: 'count() takes no argument: it counts every row the WHERE keeps',
+        hint: `to count the rows where ${arg} holds, use sum(${arg})`
+      })])
+    }
+  })
+
+  test('a value that is no condition gets the general advice', () => {
+    expect(countOf('rally.num')[0].hint).toBe('to count the rows where a ' +
+      'condition holds, use sum(<condition>); to count fewer rows, narrow the WHERE')
+  })
+
+  test('where aggregates are not allowed, count is not a function at all', () => {
+    expect(analyzeWhere('count(shot.hasFault) > 1')[0].code)
+      .toBe('PBQL_UNKNOWN_FUNCTION')
+  })
+})
+
 describe('function names', () => {
   test('the parser knows every function the analyzer gives an arity', () => {
     expect([...new Set([...SCALAR_FNS.keys(), ...AGGREGATE_FNS.keys()])].sort())

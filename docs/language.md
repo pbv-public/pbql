@@ -458,8 +458,9 @@ error), and they exist only in `SELECT`, `HAVING`, and a grouped
 shot at a time.
 
 `count()` counts selected shots (`count(*)` is the same). It takes no other
-argument: to count the shots where a condition holds, use
-`sum(<condition>)`. PBQL's underlying rows are shots, so rally
+argument (`PBQL_COUNT_ARGUMENT`): SQL's `count(x)` counts the rows where `x`
+is not null, which on a flag that is never unknown is every row, so to count
+the shots where a condition holds, use `sum(<condition>)`. PBQL's underlying rows are shots, so rally
 and game properties repeat on every selected shot. To calculate a result per
 rally, filter to one shot per rally, commonly with `shot.num = 1`.
 

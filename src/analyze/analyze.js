@@ -203,6 +203,14 @@ function inferType (node) {
   }
 }
 
+// Whether an expression is a condition: a comparison, a junction, a test
+// like exists(), or anything typed boolean (a flag such as shot.hasFault)
+function isCondition (node) {
+  return ['cmp', 'in', 'and', 'or', 'not'].includes(node.kind) ||
+    (node.kind === 'call' && node.name === 'exists') ||
+    inferType(node) === 'boolean'
+}
+
 // the expressions a CASE can evaluate to: each THEN, and the ELSE if any
 function caseResults (node) {
   return [...node.whens.map(({ then }) => then), ...(node.else === null ? [] : [node.else])]
@@ -481,6 +489,18 @@ export function analyze (query) {
           ...SCALAR_FNS.keys(),
           ...(aggregates === true ? AGGREGATE_FNS.keys() : [])
         ]))
+    } else if (node.name === 'count') {
+      // SQL's count(x) counts the rows where x is not null; it is written
+      // to mean the rows where x holds. On a flag that is never unknown
+      // (shot.hasFault) the two differ, SQL's being every shot, so neither
+      // meaning is safe to guess: say which to write instead.
+      const arg = printExpr(node.args[0])
+      err(node, 'PBQL_COUNT_ARGUMENT',
+        'count() takes no argument: it counts every row the WHERE keeps',
+        isCondition(node.args[0])
+          ? `to count the rows where ${arg} holds, use sum(${arg})`
+          : 'to count the rows where a condition holds, use ' +
+            'sum(<condition>); to count fewer rows, narrow the WHERE')
     } else {
       err(node, 'PBQL_BAD_ARITY',
         `${node.name}() cannot take ${node.args.length} argument(s) here`)
