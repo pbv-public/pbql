@@ -163,6 +163,29 @@ describe('parse()', () => {
   test('keywords are legal path segments', () => {
     expect(parseWhere('shot.video.true.min = 1').lhs.path)
       .toEqual(['video', 'true', 'min'])
+    expect(parseWhere('shot.is.null = 1').lhs.path).toEqual(['is', 'null'])
+  })
+
+  test('IS NULL and IS NOT NULL are exists() under SQL names', () => {
+    const type = { kind: 'prop', base: { object: 'shot', offset: 0 }, path: ['type'] }
+    const exists = { kind: 'call', name: 'exists', args: [type] }
+    expect(parseWhere('shot.type IS NOT NULL')).toEqual(exists)
+    expect(parseWhere('shot.type is null')).toEqual({ kind: 'not', arg: exists })
+    // NOT applies to the whole test, as in SQL
+    expect(parseWhere('NOT shot.type IS NULL'))
+      .toEqual({ kind: 'not', arg: { kind: 'not', arg: exists } })
+  })
+
+  test('comparing with NULL says how to test for a missing value', () => {
+    for (const where of ['shot.type = NULL', 'shot.type != null']) {
+      const text = `FROM "f" WHERE ${where}`
+      const { errors } = parse(text)
+      // pointing at the NULL
+      expect(errors).toEqual([expect.objectContaining({
+        code: 'PBQL_NULL_VALUE', line: 1, col: text.toLowerCase().indexOf('null') + 1
+      })])
+      expect(errors[0].message).toContain('IS NULL')
+    }
   })
 
   test('methods attach args to the last path segment; empty args allowed', () => {

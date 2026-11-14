@@ -49,6 +49,14 @@ const PLAYER_NEEDS_NAME = {
     'every player, use shot.hitter (GROUP BY shot.hitter.name)'
 }
 
+// `x = NULL` (or != NULL): NULL is not a value here, as it is never
+// usefully one in SQL either; what was meant is a test for a missing value
+const NULL_VALUE = {
+  code: 'PBQL_NULL_VALUE',
+  message: 'NULL is not a value: to test for a missing value write ' +
+    'x IS NULL, and for a present one x IS NOT NULL'
+}
+
 const MISSING_WHERE = {
   code: 'PBQL_MISSING_WHERE',
   message: 'every query needs a WHERE clause after FROM; when no filter ' +
@@ -93,6 +101,9 @@ export function parse (text) {
     const at = { line: token.line, col: token.col, length: token.text.length }
     if (!isLexError && missingWhere(text, token.offset)) {
       return { errors: [{ ...MISSING_WHERE, ...at }] }
+    }
+    if (token.type === 'kw_null') {
+      return { errors: [{ ...NULL_VALUE, ...at }] }
     }
     if (token.text === '.' &&
       tokenBefore(text, token.offset)?.type === 'kw_player') {

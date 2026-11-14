@@ -515,6 +515,13 @@ describe('coverage edges', () => {
       'WHERE true ORDER BY shot.speed DESC LIMIT 2').rows)
   })
 
+  test('IS NULL selects what exists() does not', () => {
+    expect(shotsWhere('shot.isVolley IS NULL'))
+      .toEqual(shotsWhere('NOT exists(shot.isVolley)'))
+    expect(shotsWhere('shot.isVolley IS NOT NULL'))
+      .toEqual(shotsWhere('exists(shot.isVolley)'))
+  })
+
   test('game-object properties evaluate in queries', () => {
     expect(shotsWhere('game.numRallies = 3')).toHaveLength(9)
     expect(shotsWhere('game.winner = me.team')).toHaveLength(9)

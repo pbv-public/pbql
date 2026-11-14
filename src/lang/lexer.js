@@ -24,6 +24,8 @@ const KEYWORDS = {
   kw_not: 'not',
   kw_true: 'true',
   kw_false: 'false',
+  kw_is: 'is', // x IS [NOT] NULL
+  kw_null: 'null',
   kw_asc: 'asc',
   kw_desc: 'desc',
   kw_shot: 'shot', // the shot object; also the singular duration unit alias

@@ -145,6 +145,15 @@ cmpExpr ->
        }) %}
   | addExpr %kw_in %leftParen literalList %rightParen
     {% d => ({ kind: 'in', lhs: d[0], list: d[3], loc: loc(d[1]) }) %}
+  # SQL's test for a missing value is exists() under another name, so it
+  # parses to exactly that: x IS NULL is NOT exists(x)
+  | addExpr %kw_is %kw_null
+    {% d => ({
+         kind: 'not',
+         arg: { kind: 'call', name: 'exists', args: [d[0]], loc: loc(d[1]) }
+       }) %}
+  | addExpr %kw_is %kw_not %kw_null
+    {% d => ({ kind: 'call', name: 'exists', args: [d[0]], loc: loc(d[1]) }) %}
   | addExpr {% id %}
 literalList ->
     inLiteral                    {% d => [d[0]] %}
@@ -216,6 +225,8 @@ segName ->
   | %kw_not     {% d => d[0].text %}
   | %kw_true    {% d => d[0].text %}
   | %kw_false   {% d => d[0].text %}
+  | %kw_is      {% d => d[0].text %}
+  | %kw_null    {% d => d[0].text %}
   | %kw_asc     {% d => d[0].text %}
   | %kw_desc    {% d => d[0].text %}
   | %kw_shot    {% d => d[0].text %}

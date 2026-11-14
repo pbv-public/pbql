@@ -39,6 +39,10 @@ describe('pbql lexer', () => {
     expect(tokens.map(t => t.text)).toEqual(['from', 'FROM', 'From', 'WHERE', 'where'])
   })
 
+  test('IS and NULL are keywords', () => {
+    expect(types('is NULL Is null')).toEqual(['kw_is', 'kw_null', 'kw_is', 'kw_null'])
+  })
+
   test('keywords only match whole identifiers', () => {
     // "me" is a player keyword but "method" must stay an identifier
     expect(types('method metadata hitters shotgun'))

@@ -103,7 +103,8 @@ Highest to lowest; comparisons do not chain (`a < b < c` is an error).
 2. unary minus — `-x`
 3. `*`, `/`
 4. `+`, `-`
-5. comparisons — `=`, `!=`, `<`, `<=`, `>`, `>=`, `IN (v, ...)`
+5. comparisons — `=`, `!=`, `<`, `<=`, `>`, `>=`, `IN (v, ...)`,
+   `IS NULL`, `IS NOT NULL`
 6. `NOT`
 7. `AND`
 8. `OR`
@@ -135,7 +136,10 @@ is a first-class concept with SQL-style three-valued logic:
 - `WHERE` keeps a shot only if the condition is **true** (not unknown).
 - `exists(expr)` is `true`/`false`, never unknown: `true` when `expr`
   evaluates to an actual value, `false` when it would be unknown (absent
-  data, out-of-range reference).
+  data, out-of-range reference). SQL's spellings mean the same:
+  `expr IS NOT NULL` is `exists(expr)` and `expr IS NULL` is
+  `NOT exists(expr)`. `NULL` is not a value, so `expr = NULL` is an error
+  (`PBQL_NULL_VALUE`).
 
 Consequence worth memorizing: `NOT shot.isVolley` does *not* match shots
 where volley-ness is unknown; write `NOT exists(shot.isVolley) OR NOT
