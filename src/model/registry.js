@@ -734,6 +734,19 @@ const PLAYER_PROPS = [
     }
   },
   {
+    path: 'hadArrivalChance',
+    type: 'boolean',
+    doc: 'whether the player had a fair chance to reach the kitchen line ' +
+      'this rally: it reached its 4th shot (its 3rd if their team ' +
+      'received) with no fault in those shots. The app\'s kitchen arrival ' +
+      'rate is avg(reachedKitchen) over these rallies, counting serving ' +
+      'ones at their team\'s serve (shot.num = 1) and receiving ones at ' +
+      'their team\'s return (shot.num = 2); unknown on games analyzed ' +
+      'before the app counted this way',
+    extract: (ctx, playerIdx) =>
+      playerInRally(ctx, playerIdx)?.had_arrival_opportunity
+  },
+  {
     path: 'pos.x',
     type: 'number',
     unit: 'feet',

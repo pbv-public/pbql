@@ -629,6 +629,17 @@ describe('runQuery: SELECT', () => {
     expect(mm.rows).toEqual([[0, 1]])
   })
 
+  test('kitchen arrival as the app counts it: reachedKitchen over arrival chances', () => {
+    // Dan received rallies 0 and 2 (a chance in each; he reached the line
+    // only in rally 2); the 2-shot rally 1 gave nobody a chance
+    const result = runQuery({
+      text: 'SELECT avg(player("Dan").reachedKitchen) AS "arrival", count() AS "chances" ' +
+        'FROM "x" WHERE shot.num = 1 AND player("Dan").hadArrivalChance',
+      games: [makeDoublesGame()]
+    })
+    expect(result.rows).toEqual([[0.5, 2]])
+  })
+
   test('mixing aggregates with per-shot expressions is an error', () => {
     const result = runQuery({
       text: 'SELECT count(), shot.num FROM "x" WHERE true',

@@ -306,6 +306,12 @@ describe('registry', () => {
     expect(props.get('reachedKitchen').extract(farShotCtx, 0)).toBe(true)
     expect(props.get('reachedKitchen').extract(farShotCtx, 1)).toBe(false)
     expect(props.get('reachedKitchen').extract(farShotCtx, 2)).toBe(true)
+    // a 3-shot rally team 0 served: only the receivers had an arrival chance
+    expect(props.get('hadArrivalChance').extract(farShotCtx, 0)).toBe(false)
+    expect(props.get('hadArrivalChance').extract(farShotCtx, 2)).toBe(true)
+    expect(props.get('hadArrivalChance').extract(farShotCtx, 3)).toBe(true)
+    // games analyzed before the flag existed leave it unknown
+    expect(props.get('hadArrivalChance').extract(farShotCtx, 1)).toBeUndefined()
     // no position data on the sparse shot
     expect(props.get('pos.x').extract(sparseCtx, 0)).toBeUndefined()
     expect(props.get('feetToKitchen').extract(sparseCtx, 0)).toBeUndefined()
@@ -326,6 +332,7 @@ describe('registry', () => {
     const singles = new Game(makeSinglesGame())
     const sctx = { game: singles, rally: singles.rallies[0], rallyIdx: 0, shot: singles.rallies[0].shots[0], shotIdx: 0 }
     expect(REGISTRY.player.props.get('reachedKitchen').extract(sctx, 1)).toBeUndefined()
+    expect(REGISTRY.player.props.get('hadArrivalChance').extract(sctx, 1)).toBeUndefined()
     expect(REGISTRY.player.props.get('startedOnLeftSide').extract(sctx, 1)).toBeUndefined()
   })
 

@@ -126,6 +126,7 @@ A player value, reached from the root `me` or a shot's `hitter` (e.g. `shot.hitt
 | `player.name` | the player's tagged name; untagged players keep their default name ("Player 1"…"Player 4") | string |  |
 | `player.startedOnLeftSide` | whether the player began the rally on the left of their partner, facing the net; not meaningful in singles | boolean |  |
 | `player.reachedKitchen` | whether the player reached the kitchen line this rally | boolean |  |
+| `player.hadArrivalChance` | whether the player had a fair chance to reach the kitchen line this rally: it reached its 4th shot (its 3rd if their team received) with no fault in those shots. The app's kitchen arrival rate is avg(reachedKitchen) over these rallies, counting serving ones at their team's serve (shot.num = 1) and receiving ones at their team's return (shot.num = 2); unknown on games analyzed before the app counted this way | boolean |  |
 | `player.pos.x` | court x at the current shot, in the player's own frame | number | feet |
 | `player.pos.y` | court y at the current shot, in the player's own frame (own baseline 0) | number | feet |
 | `player.pos.absX` | raw court x at the current shot | number | feet |

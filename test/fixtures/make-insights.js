@@ -110,10 +110,10 @@ export function makeDoublesInsights () {
         end_ms: 24000,
         winning_team: 0,
         players: [
-          { started_on_left_side: true, kitchen_arrivals: [{ since_ms: 13000, ft_moved: { x: 1, y: 10 } }] },
+          { started_on_left_side: true, kitchen_arrivals: [{ since_ms: 13000, ft_moved: { x: 1, y: 10 } }], had_arrival_opportunity: false },
           { started_on_left_side: false },
-          { started_on_left_side: true, kitchen_arrivals: [{ since_ms: 14000, ft_moved: { x: 1, y: 10 } }] },
-          { started_on_left_side: false, kitchen_arrivals: [] }
+          { started_on_left_side: true, kitchen_arrivals: [{ since_ms: 14000, ft_moved: { x: 1, y: 10 } }], had_arrival_opportunity: true },
+          { started_on_left_side: false, kitchen_arrivals: [], had_arrival_opportunity: true }
         ],
         shots: [
           makeShot({ // p0 serves from the near side
@@ -174,10 +174,10 @@ export function makeDoublesInsights () {
         end_ms: 40000,
         winning_team: 1,
         players: [
-          { started_on_left_side: true },
-          { started_on_left_side: false },
-          { started_on_left_side: false },
-          { started_on_left_side: true }
+          { started_on_left_side: true, had_arrival_opportunity: false },
+          { started_on_left_side: false, had_arrival_opportunity: false },
+          { started_on_left_side: false, had_arrival_opportunity: false },
+          { started_on_left_side: true, had_arrival_opportunity: false }
         ],
         shots: [
           makeShot({ // p2 serves from the far side
@@ -206,10 +206,10 @@ export function makeDoublesInsights () {
         end_ms: 64000,
         winning_team: 0,
         players: [
-          { started_on_left_side: true, kitchen_arrivals: [{ since_ms: 53000, ft_moved: { x: 0, y: 8 } }] },
-          { started_on_left_side: false, kitchen_arrivals: [{ since_ms: 54000, ft_moved: { x: 0, y: 9 } }] },
-          { started_on_left_side: true, kitchen_arrivals: [{ since_ms: 53500, ft_moved: { x: 1, y: 8 } }] },
-          { started_on_left_side: false, kitchen_arrivals: [{ since_ms: 56000, ft_moved: { x: 1, y: 7 } }] }
+          { started_on_left_side: true, kitchen_arrivals: [{ since_ms: 53000, ft_moved: { x: 0, y: 8 } }], had_arrival_opportunity: false },
+          { started_on_left_side: false, kitchen_arrivals: [{ since_ms: 54000, ft_moved: { x: 0, y: 9 } }], had_arrival_opportunity: false },
+          { started_on_left_side: true, kitchen_arrivals: [{ since_ms: 53500, ft_moved: { x: 1, y: 8 } }], had_arrival_opportunity: true },
+          { started_on_left_side: false, kitchen_arrivals: [{ since_ms: 56000, ft_moved: { x: 1, y: 7 } }], had_arrival_opportunity: true }
         ],
         shots: [
           makeShot({

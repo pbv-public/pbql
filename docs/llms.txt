@@ -314,6 +314,7 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
 - player.name (string): the player's tagged name; untagged players keep their default name ("Player 1"…"Player 4")
 - player.startedOnLeftSide (boolean): whether the player began the rally on the left of their partner, facing the net; not meaningful in singles
 - player.reachedKitchen (boolean): whether the player reached the kitchen line this rally
+- player.hadArrivalChance (boolean): whether the player had a fair chance to reach the kitchen line this rally: it reached its 4th shot (its 3rd if their team received) with no fault in those shots. The app's kitchen arrival rate is avg(reachedKitchen) over these rallies, counting serving ones at their team's serve (shot.num = 1) and receiving ones at their team's return (shot.num = 2); unknown on games analyzed before the app counted this way
 - player.pos.x (number [feet]): court x at the current shot, in the player's own frame
 - player.pos.y (number [feet]): court y at the current shot, in the player's own frame (own baseline 0)
 - player.pos.absX (number [feet]): raw court x at the current shot
