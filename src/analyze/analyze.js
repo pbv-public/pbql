@@ -194,24 +194,41 @@ function inferType (node) {
     // boolean)
     case 'call':
       return ['timecode', 'date'].includes(node.name) ? 'string' : undefined
+    // a CASE has a type when every result it can give has the same one
+    case 'case': {
+      const types = new Set(caseResults(node).map(inferType))
+      return types.size === 1 ? [...types][0] : undefined
+    }
     default: return undefined
   }
 }
 
+// the expressions a CASE can evaluate to: each THEN, and the ELSE if any
+function caseResults (node) {
+  return [...node.whens.map(({ then }) => then), ...(node.else === null ? [] : [node.else])]
+}
+
+// An expression's child expressions, for the walkers that look inside every
+// kind of node: unary and binary operands, call and method arguments, and
+// a CASE's conditions and results.
+function childExprs (node) {
+  return [
+    ...['arg', 'lhs', 'rhs'].map(key => node[key]).filter(Boolean),
+    ...(node.args ?? []),
+    ...(node.kind === 'case'
+      ? [...node.whens.map(({ cond }) => cond), ...caseResults(node)]
+      : [])
+  ]
+}
+
 // walks an expression, invoking fn on every rally.count(...) node within
 function forEachRallyCount (node, fn) {
-  if (node === undefined || typeof node !== 'object') {
-    return
-  }
   if (node.kind === 'prop' && node.args !== undefined &&
       node.base.object === 'rally' &&
       node.path.length === 1 && node.path[0] === 'count') {
     fn(node)
   }
-  for (const key of ['arg', 'lhs', 'rhs']) {
-    forEachRallyCount(node[key], fn)
-  }
-  for (const child of node.args ?? []) {
+  for (const child of childExprs(node)) {
     forEachRallyCount(child, fn)
   }
 }
@@ -401,6 +418,34 @@ export function analyze (query) {
       }
       case 'call':
         return checkCall(node, aggregates)
+      case 'case':
+        return checkCase(node, aggregates)
+    }
+  }
+
+  // Every WHEN is a condition and every result one type, as in SQL: a
+  // CASE that could give a number or a string has no type to compare or
+  // aggregate. Results of unknown type pass (they evaluate per the Kleene
+  // rules).
+  function checkCase (node, aggregates) {
+    for (const { cond, then, loc } of node.whens) {
+      checkExpr(cond, aggregates)
+      checkExpr(then, aggregates)
+      const condType = inferType(cond)
+      if (condType !== undefined && condType !== 'boolean') {
+        err({ loc }, 'PBQL_TYPE_MISMATCH',
+          `WHEN takes a condition, not a ${condType}`)
+      }
+    }
+    if (node.else !== null) {
+      checkExpr(node.else, aggregates)
+    }
+    const types = [...new Set(caseResults(node).map(inferType))]
+      .filter(type => type !== undefined)
+    if (types.length > 1) {
+      err(node, 'PBQL_TYPE_MISMATCH',
+        `CASE results mix ${types.join(' and ')}: give every THEN and ` +
+        'the ELSE the same type')
     }
   }
 
@@ -519,9 +564,6 @@ export function analyze (query) {
     // count() >= 4), but a bare per-shot reference does not. SELECT,
     // ORDER BY and HAVING all answer to this rule.
     const checkGroupedRefs = node => {
-      if (node === null || typeof node !== 'object') {
-        return
-      }
       if (isAggregateCall(node) || isKey(node)) {
         return
       }
@@ -530,12 +572,7 @@ export function analyze (query) {
           `"${printExpr(node)}" must be an aggregate or a GROUP BY key`)
         return
       }
-      for (const key of ['arg', 'lhs', 'rhs']) {
-        checkGroupedRefs(node[key])
-      }
-      for (const child of node.args ?? []) {
-        checkGroupedRefs(child)
-      }
+      childExprs(node).forEach(checkGroupedRefs)
     }
     const selectItems = Array.isArray(query.select) ? query.select : []
     for (const { expr } of [...selectItems, ...(query.orderBy ?? [])]) {

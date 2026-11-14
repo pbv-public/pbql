@@ -109,11 +109,32 @@ Highest to lowest; comparisons do not chain (`a < b < c` is an error).
 7. `AND`
 8. `OR`
 
+`CASE … END` is an atom (level 1): its `WHEN`, `THEN`, `ELSE` and `END`
+delimit every part, so nothing inside needs parentheses (see below).
+
 `AND`/`OR` are left-associative; parentheses group as usual. `x IN (a, b, c)`
 is exactly `x = a OR x = b OR x = c` — including the Kleene rules of §4
 (any element matching → `true`; otherwise any unknown comparison → unknown).
 The list holds literal values only; numeric elements may be signed
 (`shot.pitch IN (0, -1)`), just as `= -1` is legal.
+
+### CASE
+
+```sql
+CASE WHEN shot.num = 1 THEN "serve" WHEN shot.num = 2 THEN "return"
+     ELSE "rally" END
+```
+
+As in SQL, the first `WHEN` whose condition is `true` gives its `THEN`; a
+`WHEN` that is `false` or unknown (§4) falls through, and with no match the
+`ELSE` applies, or, without an `ELSE`, the result is unknown. Every `WHEN`
+is a condition and every result has one type (a `CASE` that could give a
+number or a string is a validation error). The simple form
+`CASE x WHEN v THEN r … END` means `CASE WHEN x = v THEN r … END`, and
+prints that way. A `CASE` goes anywhere an expression does: as a
+`GROUP BY` key that names its groups, or inside an aggregate,
+`sum(CASE WHEN … THEN 1 ELSE 0 END)` (which is `sum(<condition>)` with
+extra steps).
 
 ## 4. Types and unknown
 

@@ -10,7 +10,7 @@ const identArb = fc.constantFrom('speed', 'isVolley', 'quality', 'x', 'foo_2')
 // includes keywords (legal path segments) and player relation/root names
 // (`hitter`, `teammate`, `me`, …), which are ordinary segments in the AST
 const segArb = fc.constantFrom(
-  'speed', 'overall', 'video', 'true', 'from', 'secs',
+  'speed', 'overall', 'video', 'true', 'from', 'secs', 'null', 'end',
   'hitter', 'teammate', 'opponentLHS', 'me', 'player')
 const stringArb = fc.stringMatching(/^[ -~]{0,12}$/) // printable ascii incl. " and \
 const numberArb = fc.oneof(
@@ -67,7 +67,12 @@ const { expr: exprArb } = fc.letrec(tie => ({
   neg: tie('numeric').map(arg => ({ kind: 'neg', arg })),
   numeric: fc.oneof(
     { maxDepth: 3, withCrossShrink: true },
-    tie('atom'), tie('arith'), tie('neg')),
+    tie('atom'), tie('arith'), tie('neg'), tie('caseNode')),
+  caseNode: fc.record({
+    whens: fc.array(fc.record({ cond: tie('bool'), then: tie('numeric') }),
+      { minLength: 1, maxLength: 2 }),
+    else: fc.option(tie('numeric'), { nil: null })
+  }).map(n => ({ kind: 'case', ...n })),
   cmp: fc.record({
     op: fc.constantFrom('=', '!=', '<', '<=', '>', '>='),
     lhs: tie('numeric'),

@@ -583,6 +583,46 @@ describe('analyze()', () => {
   })
 })
 
+describe('CASE', () => {
+  test('every WHEN is a condition and every result one type', () => {
+    expect(analyzeWhere('CASE WHEN shot.speed THEN 1 END = 1')).toEqual([
+      expect.objectContaining({
+        code: 'PBQL_TYPE_MISMATCH',
+        col: 21,
+        message: 'WHEN takes a condition, not a number'
+      })])
+    expect(analyzeWhere('CASE WHEN shot.isVolley THEN 1 ELSE "x" END = 1')
+      .map(e => e.message)).toEqual([
+      'CASE results mix number and string: give every THEN and the ELSE ' +
+        'the same type'])
+    // results of unknown type pass, as do conditions of unknown type
+    expect(analyzeWhere('CASE WHEN shot.speed > 40 THEN shot.isVolley ' +
+      'WHEN exists(shot.type) THEN abs(shot.speed) > 1 END')).toEqual([])
+  })
+
+  test('a CASE has its results\' type, so comparisons check it', () => {
+    expect(analyzeWhere('CASE WHEN shot.isVolley THEN "v" ELSE "g" END = 1')[0].message)
+      .toBe('cannot compare string with number')
+    expect(analyzeWhere('CASE WHEN shot.isVolley THEN "v" END = "v"')).toEqual([])
+  })
+
+  test('grouped: a CASE is a key when it matches one, else held to the rule', () => {
+    const label = 'CASE WHEN shot.num = 1 THEN "serve" ELSE "other" END'
+    expect(analyzeQuery(`SELECT ${label}, count() FROM "f" WHERE true ` +
+      `GROUP BY ${label}`)).toEqual([])
+    expect(analyzeQuery(`SELECT ${label}, count() FROM "f" WHERE true ` +
+      'GROUP BY shot.type').map(e => e.code)).toEqual(['PBQL_NOT_GROUPED'])
+    // aggregates inside a CASE are fine in a grouped SELECT
+    expect(analyzeQuery('SELECT shot.type, CASE WHEN count() > 3 THEN "many" ' +
+      'ELSE "few" END FROM "f" WHERE true GROUP BY shot.type')).toEqual([])
+  })
+
+  test('rally.count cannot hide inside another one through a CASE', () => {
+    expect(analyzeWhere('rally.count(CASE WHEN rally.count(true) > 1 THEN ' +
+      'true ELSE false END) > 0').map(e => e.code)).toEqual(['PBQL_NESTED_COUNT'])
+  })
+})
+
 describe('function names', () => {
   test('the parser knows every function the analyzer gives an arity', () => {
     expect([...new Set([...SCALAR_FNS.keys(), ...AGGREGATE_FNS.keys()])].sort())

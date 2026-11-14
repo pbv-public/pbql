@@ -178,7 +178,30 @@ postfix ->
     literalNode                  {% id %}
   | propExpr                     {% id %}
   | callExpr                     {% id %}
+  | caseExpr                     {% id %}
   | %leftParen expr %rightParen  {% d => d[1] %}
+
+# ---- CASE ------------------------------------------------------------------
+# SQL's searched CASE: the first WHEN that is true picks its THEN (docs §4).
+# The simple form, CASE x WHEN v THEN r, is the searched one with each WHEN
+# written x = v, so it parses to exactly that.
+caseExpr ->
+    %kw_case whenClause:+ elseClause:? %kw_end
+    {% d => ({ kind: 'case', whens: d[1], else: d[2], loc: loc(d[0]) }) %}
+  | %kw_case expr whenClause:+ elseClause:? %kw_end
+    {% d => ({
+         kind: 'case',
+         whens: d[2].map(({ cond, then, loc }) => ({
+           cond: { kind: 'cmp', op: '=', lhs: d[1], rhs: cond, loc },
+           then,
+           loc
+         })),
+         else: d[3],
+         loc: loc(d[0])
+       }) %}
+whenClause -> %kw_when expr %kw_then expr
+  {% d => ({ cond: d[1], then: d[3], loc: loc(d[0]) }) %}
+elseClause -> %kw_else expr {% d => d[1] %}
 
 # ---- properties, methods, functions ---------------------------------------
 # object[.seg[.seg…]][(args)] — args make the last segment a method call
@@ -227,6 +250,11 @@ segName ->
   | %kw_false   {% d => d[0].text %}
   | %kw_is      {% d => d[0].text %}
   | %kw_null    {% d => d[0].text %}
+  | %kw_case    {% d => d[0].text %}
+  | %kw_when    {% d => d[0].text %}
+  | %kw_then    {% d => d[0].text %}
+  | %kw_else    {% d => d[0].text %}
+  | %kw_end     {% d => d[0].text %}
   | %kw_asc     {% d => d[0].text %}
   | %kw_desc    {% d => d[0].text %}
   | %kw_shot    {% d => d[0].text %}

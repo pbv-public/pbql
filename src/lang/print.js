@@ -12,7 +12,7 @@ function precOf (node) {
     case 'in': return 4
     case 'arith': return (node.op === '+' || node.op === '-') ? 5 : 6
     case 'neg': return 7
-    default: return 8 // lit, prop, call, parenthesized atoms
+    default: return 8 // lit, prop, call, case, parenthesized atoms
   }
 }
 
@@ -98,6 +98,15 @@ export function printExpr (node) {
       return node.args.map(a => sub(a, 3)).join(' AND ')
     case 'or':
       return node.args.map(a => sub(a, 2)).join(' OR ')
+    case 'case':
+      // WHEN/THEN/ELSE/END delimit every part, so none needs parentheses
+      return [
+        'CASE',
+        ...node.whens.map(({ cond, then }) =>
+          `WHEN ${printExpr(cond)} THEN ${printExpr(then)}`),
+        ...(node.else === null ? [] : [`ELSE ${printExpr(node.else)}`]),
+        'END'
+      ].join(' ')
   }
 }
 

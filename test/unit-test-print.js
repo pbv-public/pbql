@@ -104,6 +104,18 @@ describe('print()', () => {
       'FROM "f"\nWHERE (shot.isVolley OR shot.isReset) AND shot.isPoach AND shot.isFinal')
   })
 
+  test('prints CASE in its searched form, needing no parentheses', () => {
+    expect(roundtrips('SELECT case shot.type when "drop" then 1 else 2 end * 3 ' +
+      'FROM "f" WHERE true')).toContain(
+      'SELECT CASE WHEN shot.type = "drop" THEN 1 ELSE 2 END * 3')
+    expect(roundtrips('FROM "f" WHERE CASE WHEN shot.isVolley OR shot.isFinal ' +
+      'THEN shot.speed > 40 END')).toContain(
+      'WHERE CASE WHEN shot.isVolley OR shot.isFinal THEN shot.speed > 40 END')
+    // IS NULL prints as the exists() test it is
+    expect(roundtrips('FROM "f" WHERE shot.type IS NULL OR shot.speed IS NOT NULL'))
+      .toContain('WHERE NOT exists(shot.type) OR exists(shot.speed)')
+  })
+
   test('parenthesizes NOT of a junction but not NOT of a comparison', () => {
     expect(roundtrips('FROM "f" WHERE NOT (shot.isVolley AND shot.isReset)'))
       .toContain('NOT (shot.isVolley AND shot.isReset)')

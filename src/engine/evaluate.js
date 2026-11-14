@@ -264,6 +264,16 @@ export function evalExpr (node, ctx) {
       const value = evalExpr(node.arg, ctx)
       return typeof value === 'boolean' ? !value : UNKNOWN
     }
+    case 'case': {
+      // as in SQL: the first WHEN that is true picks its THEN, a false or
+      // unknown WHEN falls through, and no match without an ELSE is unknown
+      for (const { cond, then } of node.whens) {
+        if (evalExpr(cond, ctx) === true) {
+          return evalExpr(then, ctx)
+        }
+      }
+      return node.else === null ? UNKNOWN : evalExpr(node.else, ctx)
+    }
     case 'and': {
       let sawUnknown = false
       for (const arg of node.args) {

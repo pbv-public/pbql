@@ -667,6 +667,22 @@ describe('runQuery: SELECT', () => {
 describe('runQuery: GROUP BY', () => {
   const group = text => runQuery({ text, games: [makeDoublesGame()] })
 
+  test('a CASE labels groups and counts conditions', () => {
+    const label = 'CASE WHEN shot.type = "drive" THEN "drive" ' +
+      'WHEN shot.type IN ("drop", "smash") THEN "soft or smash" ELSE "other" END'
+    // types: drive ×6, drop, smash, and the sparse shot (unknown type, so
+    // both WHENs are unknown and it falls through to the ELSE)
+    expect(group(`SELECT ${label} AS "kind", count() FROM "x" WHERE true ` +
+      `GROUP BY ${label}`).rows)
+      .toEqual([['drive', 6], ['other', 1], ['soft or smash', 2]])
+    // sum(CASE WHEN c THEN 1 ELSE 0 END) is sum(c)
+    expect(group('SELECT sum(CASE WHEN shot.type = "drive" THEN 1 ELSE 0 END), ' +
+      'sum(shot.type = "drive") FROM "x" WHERE true').rows).toEqual([[6, 6]])
+    // no WHEN true and no ELSE: unknown, so null
+    expect(group('SELECT CASE WHEN shot.type = "lob" THEN 1 END FROM "x" ' +
+      'WHERE rally.num = 1 AND shot.num = 1').rows).toEqual([[null]])
+  })
+
   test('one row per key, default order ascending with the null key last', () => {
     // types: drive ×6, drop, smash, and the sparse shot (unknown)
     const result = group('SELECT shot.type, count() FROM "x" WHERE true GROUP BY shot.type')

@@ -166,6 +166,38 @@ describe('parse()', () => {
     expect(parseWhere('shot.is.null = 1').lhs.path).toEqual(['is', 'null'])
   })
 
+  test('CASE: searched, with or without ELSE, and the simple form', () => {
+    const type = { kind: 'prop', base: { object: 'shot', offset: 0 }, path: ['type'] }
+    const lit = value => ({ kind: 'lit', value })
+    expect(parseWhere('CASE WHEN shot.type = "drop" THEN 1 WHEN true THEN 2 ' +
+      'ELSE 3 END = 1')).toEqual({
+      kind: 'cmp',
+      op: '=',
+      lhs: {
+        kind: 'case',
+        whens: [
+          { cond: { kind: 'cmp', op: '=', lhs: type, rhs: lit('drop') }, then: lit(1) },
+          { cond: lit(true), then: lit(2) }],
+        else: lit(3)
+      },
+      rhs: lit(1)
+    })
+    expect(parseWhere('case when true then false end').else).toBeNull()
+    // CASE x WHEN v THEN r is the searched form with x = v
+    expect(parseWhere('CASE shot.type WHEN "drop" THEN true ELSE false END'))
+      .toEqual(parseWhere('CASE WHEN shot.type = "drop" THEN true ELSE false END'))
+    // CASE goes wherever an expression does, aggregates included
+    const { ast, errors } = parse('SELECT sum(CASE WHEN shot.isVolley ' +
+      'THEN 1 ELSE 0 END) FROM "f" WHERE true')
+    expect(errors).toBeUndefined()
+    expect(ast.select[0].expr.args[0].kind).toBe('case')
+    // a CASE needs its END
+    expect(parse('FROM "f" WHERE CASE WHEN true THEN true').errors[0].code)
+      .toBe('PBQL_UNEXPECTED_END')
+    expect(parseWhere('shot.case.when.then.else.end = 1').lhs.path)
+      .toEqual(['case', 'when', 'then', 'else', 'end'])
+  })
+
   test('IS NULL and IS NOT NULL are exists() under SQL names', () => {
     const type = { kind: 'prop', base: { object: 'shot', offset: 0 }, path: ['type'] }
     const exists = { kind: 'call', name: 'exists', args: [type] }
