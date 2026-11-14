@@ -385,8 +385,8 @@ last regardless of direction. Without `ORDER BY`, results keep video order
 instead.
 
 As in SQL, an item may name a `SELECT` column instead of repeating its
-expression: by its label (`ORDER BY "win %" DESC`) or by its 1-based
-position (`ORDER BY 2`). Any other constant would sort nothing, so it is an
+expression: by its label (`ORDER BY "win %" DESC`, or `ORDER BY n` for a
+one-word label) or by its 1-based position (`ORDER BY 2`). Any other constant would sort nothing, so it is an
 error (`PBQL_ORDER_BY_CONSTANT`), as is naming an aggregate column without
 `GROUP BY` (`PBQL_ORDER_BY_AGGREGATE`), where the `SELECT` is one row.
 
@@ -402,7 +402,8 @@ SELECT shot.hitter.name, shot.speed AS "mph", shot.type
 ```
 
 One row per selected shot; `AS "label"` names the output column (labels are
-purely cosmetic — units never change). `SELECT *` (alone, and never with
+purely cosmetic — units never change). A one-word label may go unquoted, as
+in SQL: `AS n` is `AS "n"`. `SELECT *` (alone, and never with
 `GROUP BY`) lists every scalar column of the shot, its rally, and the game
 — the whole dictionary as a table. Aggregates `count()`, `sum(x)`,
 `avg(x)`, `min(x)`, `max(x)` collapse the result to a single row; mixing an

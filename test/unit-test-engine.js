@@ -503,6 +503,11 @@ describe('coverage edges', () => {
     expect(run(grouped + '"shots" DESC').rows)
       .toEqual([[3, 4], [1, 3], [2, 2]])
     expect(run(grouped + '2 DESC LIMIT 1').rows).toEqual([[3, 4]])
+    // an unquoted label, as SQL writes it, means the same
+    const bare = run('SELECT rally.num, count() AS shots FROM "x" ' +
+      'WHERE shot.num >= 1 GROUP BY rally.num ORDER BY shots DESC')
+    expect(bare.columns).toEqual(['rally.num', 'shots'])
+    expect(bare.rows).toEqual([[3, 4], [1, 3], [2, 2]])
     // a per-shot label sorts the shots themselves
     const fastest = run('SELECT shot.speed AS "mph" FROM "x" WHERE true ' +
       'ORDER BY "mph" DESC LIMIT 2')

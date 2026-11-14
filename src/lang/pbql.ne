@@ -99,9 +99,17 @@ select ->
 selectList ->
     selectItem                    {% d => [d[0]] %}
   | selectList %comma selectItem  {% d => [...d[0], d[2]] %}
+# a one-word label may go unquoted, as SQL allows (AS n is AS "n"). Nothing
+# but a label can follow AS, so the object keywords are words here too
+# (count() AS shots, AS rally)
 selectItem ->
-    expr                 {% d => ({ expr: d[0], label: null }) %}
-  | expr %kw_as string   {% d => ({ expr: d[0], label: d[2] }) %}
+    expr                    {% d => ({ expr: d[0], label: null }) %}
+  | expr %kw_as string      {% d => ({ expr: d[0], label: d[2] }) %}
+  | expr %kw_as aliasWord   {% d => ({ expr: d[0], label: d[2].text }) %}
+aliasWord -> labelWord {% id %} | %kw_shot {% id %} | %kw_rally {% id %}
+  | %kw_game {% id %} | %kw_player {% id %} | %kw_me {% id %}
+# the words that are never an expression on their own
+labelWord -> %identifier {% id %} | %unit_shots {% id %} | %unit_secs {% id %}
 
 # ---- FROM ----------------------------------------------------------------
 # sources are opaque quoted strings; each host decides what they name (the
@@ -268,7 +276,15 @@ orderBy -> %orderBy orderList
 orderList ->
     orderItem                    {% d => [d[0]] %}
   | orderList %comma orderItem   {% d => [...d[0], d[2]] %}
-orderItem -> expr sortDir:? {% d => ({ expr: d[0], dir: d[1] ?? 'asc' }) %}
+# a bare word names a SELECT label, as an unquoted alias would: such a word
+# alone is no expression, so ORDER BY n is ORDER BY "n"
+orderItem ->
+    expr sortDir:? {% d => ({ expr: d[0], dir: d[1] ?? 'asc' }) %}
+  | labelWord sortDir:?
+    {% d => ({
+         expr: { kind: 'lit', value: d[0].text, loc: loc(d[0]) },
+         dir: d[1] ?? 'asc'
+       }) %}
 sortDir -> %kw_asc {% () => 'asc' %} | %kw_desc {% () => 'desc' %}
 limit -> %kw_limit int {% d => d[1] %}
 

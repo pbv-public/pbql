@@ -195,6 +195,25 @@ describe('parse()', () => {
     expect(parseWhere('shot.TaggedWith("x")').path).toEqual(['TaggedWith'])
   })
 
+  test('a one-word label may go unquoted, in SELECT and ORDER BY', () => {
+    const { ast, errors } = parse(
+      'SELECT shot.type AS t, count() AS n FROM "f" WHERE true ' +
+      'GROUP BY shot.type ORDER BY n DESC, t')
+    expect(errors).toBeUndefined()
+    expect(ast.select.map(({ label }) => label)).toEqual(['t', 'n'])
+    expect(stripLoc(ast.orderBy)).toEqual([
+      { expr: { kind: 'lit', value: 'n' }, dir: 'desc' },
+      { expr: { kind: 'lit', value: 't' }, dir: 'asc' }])
+    // keyword words too, where nothing else can stand
+    const words = parse('SELECT count() AS shots, game.vid AS game, ' +
+      'shot.speed AS secs FROM "f" WHERE true ORDER BY shots, secs')
+    expect(words.errors).toBeUndefined()
+    expect(words.ast.select.map(({ label }) => label))
+      .toEqual(['shots', 'game', 'secs'])
+    expect(stripLoc(words.ast.orderBy).map(({ expr }) => expr.value))
+      .toEqual(['shots', 'secs'])
+  })
+
   test('count(*) is count()', () => {
     for (const text of ['count(*)', 'COUNT( * )']) {
       const { ast, errors } = parse(`SELECT ${text} FROM "f" WHERE true`)
