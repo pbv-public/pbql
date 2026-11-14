@@ -21,8 +21,13 @@
   // accepted alias spellings canonicalize in the AST
   const CANON_OPS = { '<>': '!=', '==': '=' }
 
+  // the canonical printer always writes double quotes, so a single-quoted
+  // string reparses from its print as the same value
   function unescapeString (tok) {
-    return tok.text.slice(1, -1).replace(/\\(["\\])/g, '$1')
+    const body = tok.text.slice(1, -1)
+    return tok.text.startsWith("'")
+      ? body.replace(/''/g, "'")
+      : body.replace(/\\(["\\])/g, '$1')
   }
 
   const ZERO_DUR = () => ({ kind: 'dur', unit: 'secs', value: 0 })

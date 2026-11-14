@@ -182,6 +182,18 @@ describe('parse()', () => {
       .toBe('say "hi" \\')
   })
 
+  test('single-quoted strings mean the same as double-quoted ones', () => {
+    expect(parseWhere("shot.hitter.name = 'it''s \\ \"me\"'").rhs.value)
+      .toBe('it\'s \\ "me"')
+    // everywhere a string goes: sources, player names and labels too
+    const { ast, errors } = parse(
+      "SELECT count() AS 'n' FROM 'f' WHERE shot.hitter = player('Ray')")
+    expect(errors).toBeUndefined()
+    expect(ast.sources).toEqual(['f'])
+    expect(ast.select[0].label).toBe('n')
+    expect(ast.where.rhs.base.name).toBe('Ray')
+  })
+
   test('durations: units, aliases, rally, min/max', () => {
     const q = 'FROM "f" WHERE true CONTEXT BEFORE max(1 shot, 2.5secs) CONTEXT AFTER rally'
     const { ast, errors } = parse(q)

@@ -52,8 +52,9 @@ const lexer = moo.compile({
   // numbers are unsigned at the token level; negation is the unary - operator
   float: { match: /[0-9]+\.[0-9]+/, value: parseFloat },
   int: { match: /[0-9]+/, value: parseInt },
-  // double-quoted, \" and \\ escapes, no newlines
-  string: /"(?:\\["\\]|[^"\\\n])*"/,
+  // double-quoted with \" and \\ escapes, or single-quoted as in SQL with
+  // '' for a quote; no newlines either way
+  string: /"(?:\\["\\]|[^"\\\n])*"|'(?:''|[^'\n])*'/,
   // multi-word section keywords (must precede the identifier rule)
   contextBefore: ciPhrase('CONTEXT BEFORE'),
   contextAfter: ciPhrase('CONTEXT AFTER'),

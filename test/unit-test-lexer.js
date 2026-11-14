@@ -68,6 +68,12 @@ describe('pbql lexer', () => {
     expect(s.text).toBe('"say \\"hi\\" \\\\ bye"')
   })
 
+  test('strings may be single-quoted, as in SQL, with \'\' for a quote', () => {
+    const [s] = lex("'it''s \"fine\"'")
+    expect(s.type).toBe('string')
+    expect(s.text).toBe("'it''s \"fine\"'")
+  })
+
   test('multi-word keywords allow flexible whitespace and any case', () => {
     expect(types('CONTEXT BEFORE Context\tAfter Order   By'))
       .toEqual(['contextBefore', 'contextAfter', 'orderBy'])

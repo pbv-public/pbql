@@ -73,8 +73,10 @@ or give each condition its own aggregate column.
   `shot.isVolley`, not `shot.isvolley`.
 - **Numbers**: integer (`42`) and decimal (`3.5`) literals, always
   non-negative at the token level; negation is the unary `-` operator.
-- **Strings**: double-quoted; `\"` and `\\` are the only escapes; no
-  newlines inside strings.
+- **Strings**: double-quoted, where `\"` and `\\` are the only escapes, or
+  single-quoted as in SQL, where `''` is a quote (`'it''s'`) and a backslash
+  is itself; no newlines inside strings. Both mean the same string; the
+  canonical form is double-quoted.
 - **Booleans**: `true`, `false`.
 - **Comments**: `#` to end of line.
 - **Reserved words may still be used as property names**: keywords are
