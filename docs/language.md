@@ -321,7 +321,7 @@ resolve to whole games of insights data.
 ### 6.2 WHERE
 
 Any boolean-valued expression per §3–§5. Required (use `WHERE true` for
-everything).
+everything); a query without one fails with `PBQL_MISSING_WHERE`.
 
 ### 6.3 CONTEXT
 

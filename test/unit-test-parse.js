@@ -244,6 +244,28 @@ describe('parse()', () => {
     }])
   })
 
+  test('names a missing WHERE instead of the clause that came next', () => {
+    const missing = {
+      code: 'PBQL_MISSING_WHERE',
+      message: 'every query needs a WHERE clause after FROM; when no ' +
+        'filter is wanted, write WHERE true'
+    }
+    // the next clause is where parsing stopped
+    expect(parse('SELECT shot.type, count() FROM "g" GROUP BY shot.type')
+      .errors).toEqual([{ ...missing, line: 1, col: 36, length: 8 }])
+    expect(parse('FROM "g" LIMIT 3').errors)
+      .toEqual([{ ...missing, line: 1, col: 10, length: 5 }])
+    // or the end of the query, in any branch of a union
+    expect(parse('SELECT count() FROM "g"').errors)
+      .toEqual([{ ...missing, line: 1, col: 24, length: 0 }])
+    expect(parse('SELECT count() FROM "h" UNION ALL ' +
+      'SELECT count() FROM "g" WHERE true').errors[0].code)
+      .toBe('PBQL_MISSING_WHERE')
+    // a WHERE that is there but incomplete is not missing
+    expect(parse('FROM "g" WHERE').errors[0].code).toBe('PBQL_UNEXPECTED_END')
+    expect(parse('FROM "g" WHERE )').errors[0].code).toBe('PBQL_PARSE_ERROR')
+  })
+
   test('rejects calling an object or a non-min/max duration function', () => {
     expect(parse('FROM "f" WHERE shot("x")').errors[0].code)
       .toBe('PBQL_UNEXPECTED_END')
