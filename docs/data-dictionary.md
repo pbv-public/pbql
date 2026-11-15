@@ -47,10 +47,10 @@ The shot being tested. `shot[k]` addresses the shot k earlier/later in the same 
 | `shot.hasError` | whether any error was detected on this shot | boolean |  |
 | `shot.errors.unforced` | whether the fault on this shot was an unforced error, i.e. the hitter MISSED without being put under pressure; only assessed on actual faults with a confidently-known rally winner, so it is often unknown even on a real fault. Count forced faults as errors.unforced = false; do NOT subtract the unforced count from the fault count, which counts every unknown as forced. avg() of it is a share of assessed faults, not of shots: a per-shot rate is sum(shot.errors.unforced) / count() over every shot, never filtered to the rows where it exists. Not related to winnerType "forced_fault", which is set on a shot that WON | boolean |  |
 | `shot.errors.popup` | whether a dink or drop popped the ball up ("exploited" = the opponents attacked it out of the air, "potential" = they did not) | string | "exploited"\|"potential" |
-| `shot.hasFault` | whether this shot committed a rule fault, actual or potential — e.g. a ball headed out that an opponent played anyway | boolean |  |
+| `shot.hasFault` | whether this shot committed a rule fault: into the net, short, or landed out. A ball headed out that an opponent played anyway (errors.faults.out.outcome = "intercepted") is not a fault | boolean |  |
 | `shot.errors.faults.net` | whether the net stopped the ball | boolean |  |
 | `shot.errors.faults.short` | whether the shot landed on the hitter's own side short of the net | boolean |  |
-| `shot.errors.faults.out.outcome` | whether the out ball landed or was played anyway | string | "landed"\|"intercepted" |
+| `shot.errors.faults.out.outcome` | whether the out ball landed (a fault) or was played anyway (not a fault); unknown on shots with no out ball, so a per-shot out rate is sum(shot.errors.faults.out.outcome = "landed") / count(), never avg() of it | string | "landed"\|"intercepted" |
 | `shot.errors.faults.out.direction` | which way the ball went (or was headed) out — "long" past the baseline, "left"/"right" wide of a sideline from the hitter's perspective | string | "left"\|"right"\|"long" |
 | `shot.from` | where the ball was struck | position |  |
 | `shot.from.zone` | depth zone the ball was struck from | string | "deep"\|"mid"\|"short"\|"kitchen" |

@@ -420,9 +420,14 @@ const SHOT_PROPS = [
   {
     path: 'hasFault',
     type: 'boolean',
-    doc: 'whether this shot committed a rule fault, actual or potential — ' +
-      'e.g. a ball headed out that an opponent played anyway',
-    extract: ctx => isPresent(ctx.shot.errors?.faults)
+    // A ball headed out that an opponent played anyway is only a prediction,
+    // and the app counts it as in; counting it here made fault rates several
+    // times what the app showed.
+    doc: 'whether this shot committed a rule fault: into the net, short, ' +
+      'or landed out. A ball headed out that an opponent played anyway ' +
+      '(errors.faults.out.outcome = "intercepted") is not a fault',
+    extract: ctx => Object.entries(ctx.shot.errors?.faults ?? {}).some(
+      ([name, fault]) => name === 'out' ? fault?.outcome === 'landed' : fault === true)
   },
   // fault flags are recorded only when the fault happened, so absence means
   // false, never unknown (the `=== true` guard also shrugs off malformed data)
@@ -442,7 +447,10 @@ const SHOT_PROPS = [
     path: 'errors.faults.out.outcome',
     type: 'string',
     unit: '"landed"|"intercepted"',
-    doc: 'whether the out ball landed or was played anyway',
+    doc: 'whether the out ball landed (a fault) or was played anyway (not ' +
+      'a fault); unknown on shots with no out ball, so a per-shot out rate ' +
+      'is sum(shot.errors.faults.out.outcome = "landed") / count(), never ' +
+      'avg() of it',
     extract: ctx => ctx.shot.errors?.faults?.out?.outcome
   },
   {

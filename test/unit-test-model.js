@@ -159,6 +159,18 @@ describe('registry', () => {
     expect(props.get('errors.popup').extract(farShotCtx)).toBe('potential')
   })
 
+  test('hasFault counts recorded faults, not an out ball played anyway', () => {
+    const hasFault = faults => REGISTRY.shot.props.get('hasFault')
+      .extract({ ...farShotCtx, shot: { errors: { faults } } })
+    expect(hasFault({ out: { outcome: 'landed', direction: 'long' } })).toBe(true)
+    expect(hasFault({ out: { outcome: 'intercepted', direction: 'long' } })).toBe(false)
+    expect(hasFault({ short: true })).toBe(true)
+    // flags pbql does not expose still count, and a false one does not
+    expect(hasFault({ kitchen: true })).toBe(true)
+    expect(hasFault({ kitchen: false, out: null })).toBe(false)
+    expect(hasFault({})).toBe(false)
+  })
+
   test('fault flags read false, never unknown, when the fault is absent', () => {
     const props = REGISTRY.shot.props
     // no faults group at all (farShotCtx), and a shot with no errors at all
