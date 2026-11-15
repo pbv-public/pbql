@@ -423,9 +423,10 @@ const SHOT_PROPS = [
     // A ball headed out that an opponent played anyway is only a prediction,
     // and the app counts it as in; counting it here made fault rates several
     // times what the app showed.
-    doc: 'whether this shot committed a rule fault: into the net, short, ' +
-      'or landed out. A ball headed out that an opponent played anyway ' +
-      '(errors.faults.out.outcome = "intercepted") is not a fault',
+    doc: 'whether this shot committed a rule fault the analysis recorded: ' +
+      'into the net, short of it on the hitter\'s own side, landed out, or ' +
+      'any other fault flag it sets. A ball headed out that an opponent ' +
+      'played anyway (errors.faults.out.outcome = "intercepted") is not a fault',
     extract: ctx => Object.entries(ctx.shot.errors?.faults ?? {}).some(
       ([name, fault]) => name === 'out' ? fault?.outcome === 'landed' : fault === true)
   },
