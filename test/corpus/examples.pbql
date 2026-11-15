@@ -66,9 +66,14 @@ WHERE shot.hitter = me AND shot.errors.unforced
 FROM "83gyqyc10y8f"
 WHERE shot.hitter = me AND shot.errors.faults.out.outcome = "intercepted"
 
-# Q: Clean shots — exclude anything with a detected error
+# Q: Clean shots — exclude anything with a detected error, popups and out balls played anyway included (not the same as the shots that went in)
 FROM "83gyqyc10y8f"
 WHERE shot.hitter = me AND NOT shot.hasError
+
+# Q: My shot accuracy: the share in, into the net and out (an out outcome exists only on shots with an out ball, so sum it over count(), never avg() it)
+SELECT avg(NOT shot.hasFault) * 100 AS "in %", avg(shot.errors.faults.net) * 100 AS "net %", sum(shot.errors.faults.out.outcome = "landed") * 100 / count() AS "out %"
+FROM "83gyqyc10y8f"
+WHERE shot.hitter = me
 
 # Q: Shots that did NOT go into the net (fault flags are never unknown, so NOT is safe)
 FROM "83gyqyc10y8f"

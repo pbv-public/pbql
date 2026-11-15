@@ -385,7 +385,10 @@ const SHOT_PROPS = [
   {
     path: 'hasError',
     type: 'boolean',
-    doc: 'whether any error was detected on this shot',
+    doc: 'whether any error was detected on this shot: a fault, a popup, or ' +
+      'a ball headed out that an opponent played anyway. So NOT ' +
+      'shot.hasError is not the shots that went in; for those use NOT ' +
+      'shot.hasFault',
     extract: ctx => isPresent(ctx.shot.errors)
   },
   {

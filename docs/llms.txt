@@ -247,7 +247,7 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
 - shot.confidence (number [0-1]): confidence in the reconstructed trajectory
 - shot.hitTime (number [seconds]): when in the video the ball was struck
 - shot.endTime (number [seconds]): when in the video the shot's flight ended
-- shot.hasError (boolean): whether any error was detected on this shot
+- shot.hasError (boolean): whether any error was detected on this shot: a fault, a popup, or a ball headed out that an opponent played anyway. So NOT shot.hasError is not the shots that went in; for those use NOT shot.hasFault
 - shot.errors.unforced (boolean): whether the fault on this shot was an unforced error, i.e. the hitter MISSED without being put under pressure; only assessed on actual faults with a confidently-known rally winner, so it is often unknown even on a real fault. Count forced faults as errors.unforced = false; do NOT subtract the unforced count from the fault count, which counts every unknown as forced. avg() of it is a share of assessed faults, not of shots: a per-shot rate is sum(shot.errors.unforced) / count() over every shot, never filtered to the rows where it exists. Not related to winnerType "forced_fault", which is set on a shot that WON
 - shot.errors.popup (string ["exploited"|"potential"]): whether a dink or drop popped the ball up ("exploited" = the opponents attacked it out of the air, "potential" = they did not)
 - shot.hasFault (boolean): whether this shot committed a rule fault the analysis recorded: into the net, short of it on the hitter's own side, landed out, or any other fault flag it sets. A ball headed out that an opponent played anyway (errors.faults.out.outcome = "intercepted") is not a fault
@@ -418,10 +418,16 @@ Q: Balls I hit out that the other team played anyway
     FROM "83gyqyc10y8f"
     WHERE shot.hitter = me AND shot.errors.faults.out.outcome = "intercepted"
 
-Q: Clean shots — exclude anything with a detected error
+Q: Clean shots — exclude anything with a detected error, popups and out balls played anyway included (not the same as the shots that went in)
 
     FROM "83gyqyc10y8f"
     WHERE shot.hitter = me AND NOT shot.hasError
+
+Q: My shot accuracy: the share in, into the net and out (an out outcome exists only on shots with an out ball, so sum it over count(), never avg() it)
+
+    SELECT avg(NOT shot.hasFault) * 100 AS "in %", avg(shot.errors.faults.net) * 100 AS "net %", sum(shot.errors.faults.out.outcome = "landed") * 100 / count() AS "out %"
+    FROM "83gyqyc10y8f"
+    WHERE shot.hitter = me
 
 Q: Shots that did NOT go into the net (fault flags are never unknown, so NOT is safe)
 
