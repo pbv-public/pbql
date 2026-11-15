@@ -178,13 +178,20 @@ describe('registry', () => {
     for (const ctx of [farShotCtx, cleanCtx]) {
       expect(props.get('errors.faults.net').extract(ctx)).toBe(false)
       expect(props.get('errors.faults.short').extract(ctx)).toBe(false)
+      expect(props.get('errors.faults.out.landed').extract(ctx)).toBe(false)
+      expect(props.get('errors.faults.out.outcome').extract(ctx)).toBeUndefined()
     }
     // a faults group present for another fault still reads false for these
     const outCtx = { game, rally: game.rallies[2], rallyIdx: 2, shot: game.rallies[2].shots[3], shotIdx: 3 }
     expect(props.get('errors.faults.net').extract(outCtx)).toBe(false)
     expect(props.get('errors.faults.short').extract(outCtx)).toBe(false)
+    expect(props.get('errors.faults.out.landed').extract(outCtx)).toBe(true)
     expect(props.get('errors.faults.out.direction').extract(outCtx)).toBe('long')
     expect(props.get('errors.faults.short').extract(sparseCtx)).toBe(false)
+    expect(props.get('errors.faults.out.landed').extract(sparseCtx)).toBe(false)
+    // an out ball an opponent played anyway did not land out
+    const interceptedCtx = { ...farShotCtx, shot: { errors: { faults: { out: { outcome: 'intercepted' } } } } }
+    expect(props.get('errors.faults.out.landed').extract(interceptedCtx)).toBe(false)
   })
 
   test('pressure and positioning scores surface where the model emits them', () => {

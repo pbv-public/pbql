@@ -448,13 +448,20 @@ const SHOT_PROPS = [
     extract: ctx => ctx.shot.errors?.faults?.short === true
   },
   {
+    path: 'errors.faults.out.landed',
+    type: 'boolean',
+    doc: 'whether the ball landed out, a fault; false on every other shot, ' +
+      'including one headed out that an opponent played anyway, so avg() ' +
+      'of it is the per-shot out rate',
+    extract: ctx => ctx.shot.errors?.faults?.out?.outcome === 'landed'
+  },
+  {
     path: 'errors.faults.out.outcome',
     type: 'string',
     unit: '"landed"|"intercepted"',
     doc: 'whether the out ball landed (a fault) or was played anyway (not ' +
-      'a fault); unknown on shots with no out ball, so a per-shot out rate ' +
-      'is sum(shot.errors.faults.out.outcome = "landed") / count(), never ' +
-      'avg() of it',
+      'a fault); unknown on shots with no out ball, so never avg() it: a ' +
+      'per-shot out rate is avg(shot.errors.faults.out.landed)',
     extract: ctx => ctx.shot.errors?.faults?.out?.outcome
   },
   {

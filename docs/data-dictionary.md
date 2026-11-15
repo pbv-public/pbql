@@ -50,7 +50,8 @@ The shot being tested. `shot[k]` addresses the shot k earlier/later in the same 
 | `shot.hasFault` | whether this shot committed a rule fault the analysis recorded: into the net, short of it on the hitter's own side, landed out, or any other fault flag it sets. A ball headed out that an opponent played anyway (errors.faults.out.outcome = "intercepted") is not a fault | boolean |  |
 | `shot.errors.faults.net` | whether the net stopped the ball | boolean |  |
 | `shot.errors.faults.short` | whether the shot landed on the hitter's own side short of the net | boolean |  |
-| `shot.errors.faults.out.outcome` | whether the out ball landed (a fault) or was played anyway (not a fault); unknown on shots with no out ball, so a per-shot out rate is sum(shot.errors.faults.out.outcome = "landed") / count(), never avg() of it | string | "landed"\|"intercepted" |
+| `shot.errors.faults.out.landed` | whether the ball landed out, a fault; false on every other shot, including one headed out that an opponent played anyway, so avg() of it is the per-shot out rate | boolean |  |
+| `shot.errors.faults.out.outcome` | whether the out ball landed (a fault) or was played anyway (not a fault); unknown on shots with no out ball, so never avg() it: a per-shot out rate is avg(shot.errors.faults.out.landed) | string | "landed"\|"intercepted" |
 | `shot.errors.faults.out.direction` | which way the ball went (or was headed) out — "long" past the baseline, "left"/"right" wide of a sideline from the hitter's perspective | string | "left"\|"right"\|"long" |
 | `shot.from` | where the ball was struck | position |  |
 | `shot.from.zone` | depth zone the ball was struck from | string | "deep"\|"mid"\|"short"\|"kitchen" |

@@ -253,7 +253,8 @@ PBQL selects shots from pickleball games analyzed by PB Vision.
 - shot.hasFault (boolean): whether this shot committed a rule fault the analysis recorded: into the net, short of it on the hitter's own side, landed out, or any other fault flag it sets. A ball headed out that an opponent played anyway (errors.faults.out.outcome = "intercepted") is not a fault
 - shot.errors.faults.net (boolean): whether the net stopped the ball
 - shot.errors.faults.short (boolean): whether the shot landed on the hitter's own side short of the net
-- shot.errors.faults.out.outcome (string ["landed"|"intercepted"]): whether the out ball landed (a fault) or was played anyway (not a fault); unknown on shots with no out ball, so a per-shot out rate is sum(shot.errors.faults.out.outcome = "landed") / count(), never avg() of it
+- shot.errors.faults.out.landed (boolean): whether the ball landed out, a fault; false on every other shot, including one headed out that an opponent played anyway, so avg() of it is the per-shot out rate
+- shot.errors.faults.out.outcome (string ["landed"|"intercepted"]): whether the out ball landed (a fault) or was played anyway (not a fault); unknown on shots with no out ball, so never avg() it: a per-shot out rate is avg(shot.errors.faults.out.landed)
 - shot.errors.faults.out.direction (string ["left"|"right"|"long"]): which way the ball went (or was headed) out — "long" past the baseline, "left"/"right" wide of a sideline from the hitter's perspective
 - shot.from.x (number [feet]): where the ball was struck — hitter-frame x (0-20, grows to the hitter's right)
 - shot.from.y (number [feet]): where the ball was struck — hitter-frame y (own baseline 0, net 22)
@@ -423,9 +424,9 @@ Q: Clean shots — exclude anything with a detected error, popups and out balls 
     FROM "83gyqyc10y8f"
     WHERE shot.hitter = me AND NOT shot.hasError
 
-Q: My shot accuracy: the share in, into the net and out (an out outcome exists only on shots with an out ball, so sum it over count(), never avg() it)
+Q: My shot accuracy: the share in, into the net and out (a fault flag is false, never unknown, on a shot without that fault, so avg() of it is a share of every shot)
 
-    SELECT avg(NOT shot.hasFault) * 100 AS "in %", avg(shot.errors.faults.net) * 100 AS "net %", sum(shot.errors.faults.out.outcome = "landed") * 100 / count() AS "out %"
+    SELECT avg(NOT shot.hasFault) * 100 AS "in %", avg(shot.errors.faults.net) * 100 AS "net %", avg(shot.errors.faults.out.landed) * 100 AS "out %"
     FROM "83gyqyc10y8f"
     WHERE shot.hitter = me
 

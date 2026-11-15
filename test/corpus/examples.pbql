@@ -70,8 +70,8 @@ WHERE shot.hitter = me AND shot.errors.faults.out.outcome = "intercepted"
 FROM "83gyqyc10y8f"
 WHERE shot.hitter = me AND NOT shot.hasError
 
-# Q: My shot accuracy: the share in, into the net and out (an out outcome exists only on shots with an out ball, so sum it over count(), never avg() it)
-SELECT avg(NOT shot.hasFault) * 100 AS "in %", avg(shot.errors.faults.net) * 100 AS "net %", sum(shot.errors.faults.out.outcome = "landed") * 100 / count() AS "out %"
+# Q: My shot accuracy: the share in, into the net and out (a fault flag is false, never unknown, on a shot without that fault, so avg() of it is a share of every shot)
+SELECT avg(NOT shot.hasFault) * 100 AS "in %", avg(shot.errors.faults.net) * 100 AS "net %", avg(shot.errors.faults.out.landed) * 100 AS "out %"
 FROM "83gyqyc10y8f"
 WHERE shot.hitter = me
 
